@@ -1,0 +1,189 @@
+<template>
+    <div class="book-top-list "  @click="click_handle" :style="`height:${small?190:240}rpx`">
+       <div class="left-img">
+		     <image class="book-img" :src="item.picture"  ></image>
+			 <text  v-if="item.tag"  class="tag">{{item.tag}}</text>
+	   </div>
+	   
+       <div class="right-list">
+            <div class="book-title">
+                <text :class="['book-title-left',white?'white':'']">{{item.title}}</text>
+            </div>
+            <text :class="['book-subtitle' ,white?'white':'',small?'txt-l2':'txt-l3']"  >
+                {{ filterHTMLTag(item.intor_html)}}
+            </text>
+            <div class="author-list" >
+                <div class="author"><text :class="['text',white?'white':'']">{{(item.cate_desc && item.cate_desc.join(' '))||"重生 逆袭"}}</text></div>
+                <!-- <text :class="['text',white?'white':'']">{{(item.iswz == 1)?e18n('books.serial'):e18n('books.completed')}}</text> -->
+				 <text :class="['tagtext',white?'white':'them']">{{formatBookHots(item.learn_sum)}}人观看</text>
+            </div>
+        </div>
+    </div>
+	
+</template>
+
+<script>
+    export default {
+      
+        props:{
+             item:Object,
+             white:Boolean,
+			 small:{
+			 	type:Boolean,
+			 	default:false,
+			 },
+             cto:{
+				type:String,
+				default:'reading',
+			},
+            mini_type:{
+                type:String,
+                default:'score'    // hots 人气  comments  likes  score
+            }
+        },
+		methods:{
+			  ...getApp().globalData.util,
+			  click_handle() {
+			       console.log('hl click_handle',this.cto)
+					 this.util_router_push('pages/video_player',{course_id:this.item.id,chap:this.item.last_chap})
+			  },
+		},
+         
+    }
+</script>
+
+<style lang="less">
+    @import url("./../../assets/styles/style.less");
+    
+    .book-top-list {
+        display: flex;
+        flex-direction: row ;
+        justify-content:space-between;
+        align-items: stretch;
+
+		.left-img{
+			position: relative;
+			flex:2;
+			width: auto;
+			height: auto;
+			margin-right: 10rpx;
+			border-radius: 5%;
+			.book-img {
+				position: absolute;
+				left: 0rpx;
+				top: 0rpx;
+				right: 0;
+				bottom: 0;
+				width: auto;
+				height: auto;
+				border-radius: 5%;
+			}
+			.tag{
+				position: absolute;
+				left: 0rpx;
+				top: 0rpx;
+
+				border-top-left-radius: 15rpx;
+				border-bottom-right-radius: 15rpx;
+				padding: 2rpx 18rpx;
+				font-size:24rpx;
+				color: @white;
+				text-align: center;				
+				background-color: @orange;
+			}
+		}
+		
+        
+        .right-list{
+            flex:6;
+            display: flex;
+            flex-direction: column ;
+            justify-content:space-between;
+            align-items:stretch;
+			.book-title {
+			    display: flex;
+			    align-items: center;
+				flex-direction: row ;
+			    justify-content: space-between;
+				.book-title-left {
+				    font-size: 30rpx;
+					line-height: 40rpx;
+					font-weight: 600;
+				    color: @white;
+					.txt-lines(1);
+				    padding: 2rpx 0rpx;
+					flex:3;
+				    height: 40rpx
+				}
+				.white{
+				    color:@white;
+				}
+			}
+			
+			.txt-l3{
+				.txt-lines(3);
+			}
+			.txt-l2{
+				.txt-lines(2);
+			}
+			.book-subtitle {
+						   font-size: 28rpx;
+						   font-weight: 400;
+						   color: @grey;
+						   line-height: 40rpx;
+						   /* background: rgba(255, 240, 249, 1); */
+						   opacity: 0.7;
+						   
+					}
+					.white{
+					    color:@white;
+					}
+				.author-list {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					flex-direction: row;
+					align-self: stretch;
+					.tagtext{
+						color: @black2;
+						font-size: 26rpx;
+						padding: 5rpx 15rpx;
+						.txt-lines(1);
+						flex: 50;
+						text-align: right;
+						
+					}
+					.author{
+						flex-direction: row;
+						display: flex;
+						flex: 50;
+						.text{
+							color: @black2;
+							font-size: 26rpx;
+							padding: 5rpx 15rpx;
+							.txt-lines(1);
+						}
+						.white{
+							color:@white;
+						}
+						.them{
+						     color:@th-yellow;
+						}
+					}
+					.white{
+						color:@them;
+					}
+					.them{
+					     color:@them;
+					}
+					
+				}
+        }
+    }
+
+   
+
+   
+   
+    
+</style>

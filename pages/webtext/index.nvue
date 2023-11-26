@@ -1,0 +1,124 @@
+<template>
+  <div class="flx-colum bg-white">
+    <block v-if="!init">
+      <ks-loading-page></ks-loading-page>
+    </block>
+    <block v-else>
+		<!-- #ifdef H5 -->
+			<ks-h5-navi-title :title="title"></ks-h5-navi-title>
+		<!-- #endif -->
+	  <div class="flx-colum bg-white pdw5">
+		  <rich-text :nodes="getNodes()" :selectable="false"  ></rich-text>
+		   <!-- <rich-text :nodes="getNodes()" :selectable="false" v-if="type=='invitation'"></rich-text>
+		  <web-view  :update-title="false"	:src="url"   :style="webviewstyle"   v-else></web-view> -->
+	  </div>
+    </block>
+	   <ks-message-center :pagename="pagename"></ks-message-center>
+  </div>
+</template>
+
+<script>
+	import $htmlPaser from '@/helper/html-parser.js'
+	export default {
+		data(){
+			return {
+				 init:false,
+				 pagename:'webtext',
+				 url:'',
+				 type:'',
+				 text:'',
+				 title:'',
+				 window:'',
+			}
+		},
+		methods:{
+			...getApp().globalData.util,
+			getNodes(){
+				let nodes= $htmlPaser(this.text)
+				console.log(this.text,nodes);
+				return nodes;
+			},
+			htmlHandle(html){
+				let start_flag="<body>"
+				let end_flag='</body>'
+				let start_indx=html.indexOf(start_flag)
+				if(start_indx<0) start_indx=0;
+				let end_indx = html.indexOf(end_flag);
+				if(end_indx<0) end_indx=html.length;
+				let real_txt=html.substring(start_indx,end_indx);
+				return real_txt.replace('<body>','');
+			}
+		},
+		computed:{
+			webviewstyle(){
+				// #ifdef APP
+					//return {width:'350px',height:'200px'};
+					//return {'width':(this.window.width||1000 )+'px','height':(this.window.height||2000)+'px'};
+				//	if(!this.window) return 'width:750rpx;height:1500rpx;';
+					return `width:${this.window.width||1000 }px;height:15000px;`;
+				// #endif
+				return '';
+			}
+		},
+		onReady() {
+			uni.getSystemInfo({
+				success: function (res) {
+					this.window={width:res.windowWidth,height:res.windowHeight};
+				}
+			});
+		},
+		onLoad(params) {
+		   this.type=params.type||'privacy';
+		   this.text=params.text||'';
+		   this.title=params.title||'';
+		   },
+	   onHide() {
+		   },
+	  onShow() {
+		this.init=false;
+		switch(this.type){
+		  case 'invitation':
+				this.title=this.e18n('mine.activity_rules');
+				 this.api().getInviteRules(this.uid,res => {
+						this.text = res.illustration;
+						this.init=true;
+					})
+			break;
+		  case 'privacy':
+			this.title=this.e18n('privacy_policy');
+			 this.getInitDataCb(()=>{
+				 let path=this.getPrivacyUri()
+				 path=(path.indexOf('http')==0)? path: this.api().getBaseUrl()+path;
+				 this.api().text(path,txt=>{
+					 this.init=true;
+					 this.text=this.htmlHandle(txt.data);
+				 },err=>{
+					 
+				 })
+			 })
+			break;
+		  case 'agreement':
+				this.title=this.e18n('agreement');
+				this.getInitDataCb(()=>{
+					 let path=this.getAgreementUri()
+					 path=(path.indexOf('http')==0)? path: this.api().getBaseUrl()+path;
+					 this.api().text(path,txt=>{
+					 					 this.init=true;
+					 					 this.text=this.htmlHandle(txt.data);
+					 },err=>{
+					 					 
+					 })	
+				})
+			break;
+		}
+		uni.setNavigationBarTitle({title:this.title})
+	  },  
+}
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+	page{
+		background-color: @white;
+	}
+</style>

@@ -1,0 +1,50 @@
+<template>
+<div class="play-btn-root" :style="rootstyle">
+	<text class="iconfont" :style="iconstyle">&#xe610;</text>
+</div>
+</template>
+<script>
+	export default {
+      props: {
+           size:{
+		     type:Number,
+		     default:32,
+		   }
+        },
+        data(){
+          return {
+ 
+          }
+        },
+		computed:{
+			rootstyle(){
+				let r=this.size*1.5;
+				return `width:${r}rpx;height:${r}rpx;border-radius:${r}rpx`;
+			},
+			iconstyle(){
+				return `font-size:${this.size}rpx;`;
+			}
+		},
+		methods:{...getApp().globalData.util,},
+		created() {
+       
+      }
+    }
+</script>
+
+<style lang="less" scoped>
+    @import url("./../../assets/styles/style.less");
+	.play-btn-root{
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		background-color: rgba(0, 0, 0, .35);
+		.iconfont{
+			text-align: center;
+			color: @white2;
+			font-size: 32rpx;
+		}
+	}
+		
+</style>

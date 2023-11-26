@@ -1,0 +1,102 @@
+<template>
+ <div class="flx-column"> 
+ <!-- #ifdef H5 -->
+ 	<ks-h5-navi-title :title="e18n('settings')"></ks-h5-navi-title>
+ <!-- #endif -->
+ <text style="width:750rpx; display: flex;justify-content: center;text-align:center; font-size:38rpx;font-weight:800;padding:45rpx 0rpx">{{site_name}}</text>
+	 <div class="wrapper pdw5">
+	   <div class="items"><text class="label">{{ e18n('personaliy') }}:</text> <switch :checked="personaliy" @change="changeHandle"  style="thumb-color:#e3e3e3;track-color:#ff6600;transform:scale(0.7);"></switch></div>
+	   <div class="items"><text class="label" >{{ e18n('agreement') }}:</text><text class="options" @click="argeementClkHandle">{{ e18n('tolook') }}</text></div>
+	   <div class="items"><text class="label">{{ e18n('privacy_policy') }}:</text><text class="options" @click="privacyClkHandle">{{ e18n('tolook') }}</text></div>
+	   <!-- #ifdef APP || MP-WEIXIN -->
+	 			<div class="items"><text class="label">{{ e18n('version_info') }}:</text><text class="options">{{ version_name }}</text></div>
+	 			<div class="items"><text class="label">{{ e18n('logoff') }}:</text><text class="options" @click="releaseHandle">{{ e18n('tohandle') }}</text></div>
+	   <!-- #endif -->
+	 </div>
+	 <ks-message-center :pagename="pagename"></ks-message-center>
+ </div>
+</template>
+
+<script>
+export default {
+  data(){
+	  return {
+		  site_name:'',
+		  version_name:'',
+		  personaliy:true,
+		  pagename:'settings',
+	  }
+  },
+  methods:{
+	   ...getApp().globalData.util,
+	   changeHandle(e){
+		    this.util_stroage_breaksave({'settings-personaliy':e.detail.value});
+	   },
+	   argeementClkHandle(){
+	       this.util_router_push('pages/webtext',{type:'agreement'})
+	   },
+	   privacyClkHandle(){
+		   
+		    this.util_router_push('pages/webtext',{type:'privacy'})
+	      // this.util_router_push('pages/webtext',{type:'privacy'})
+	   },
+	   
+	   releaseHandle(){
+	     this.util_dialog({
+						pagename:this.pagename,
+	   					message:this.e18n('logoff_warn'),
+	   					buttons:[{text:this.e18n('sure')},{text:this.e18n('cancel')}],
+	   					success:()=>{
+							this.api().logOff(()=>{
+								this.util_toast(this.e18n('logoff_warn_suc'),0,this.pagename)
+								this.loginOut();
+								},()=>{this.util_toast(this.e18n('logoff_warn_faile'),0,this.pagename)})
+	   					}
+	   				})
+	   },
+  },
+  onShow() {
+	
+	  this.getInitDataCb((res)=>{
+		  uni.setNavigationBarTitle({
+		  	title:this.e18n('settings')
+		  })
+		  this.site_name=this.getSiteName();
+		  this.version_name=uni.getAppBaseInfo().appVersionCode;
+		  this.personaliy =this.util_stroage_breakget('settings-personaliy',this.personaliy)
+		})	
+  },
+  onHide() {
+  }
+}
+</script>
+
+<style lang="less" scoped>
+	@import './../../assets/styles/style.less';
+	page{
+		background-color: @white2;
+	}
+.wrapper {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+.items{
+	display: flex;
+	flex-direction: row;
+    .label {
+      text-align: center;
+      color:@black;
+      font-size: 32rpx;
+      font-weight: 800;
+      margin-right: 50rpx;
+		
+    }
+    .options{
+      color:@grey2;
+      font-size: 32rpx;
+    }
+    padding-bottom: 30rpx;
+}
+
+</style>

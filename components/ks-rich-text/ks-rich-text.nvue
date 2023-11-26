@@ -1,0 +1,56 @@
+<template>
+  <div class="s-wrapper" :style="vstyle">
+		<text class="text" v-for="($item,$idx) in  strs" :class="$item.cls" @click="spanClkHandle($item)">{{$item.txt}}</text>
+  </div>
+</template>
+
+<script>
+export default {
+  props:{
+	  vstyle:{
+				type:String,
+				default:'flex-direction: row; justify-content: flex-start; align-items: flex-start;',
+      },
+		strs:{
+				type:Array,
+				default:[],
+      },
+		},
+  methods:{
+	  ...getApp().globalData.util,
+	  spanClkHandle(item){
+	      if(item.emit){
+	        this.$emit(item.emit);
+	      }
+	    },
+	  },
+}
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+.s-wrapper {
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+}
+	.text{
+		/* #ifdef APP || MP-WEIXIN */
+			
+		/* #endif */
+		
+		//white-space: nowrap;
+	}
+  .left{
+    text-align: left;
+  }
+  .center{
+    text-align: center;
+  }
+  .right{
+    text-align: right;
+  }
+     
+</style>

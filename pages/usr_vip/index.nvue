@@ -1,0 +1,356 @@
+<template>
+  <div class=" flx-column ">
+    <block v-if="!init"><ks-loading-page :vstyle="'background-color:#000000;'"></ks-loading-page></block>
+    <block v-else>
+		<!-- #ifdef H5 -->
+			<ks-h5-navi-title :title="e18n('mine.vip_club')"></ks-h5-navi-title>
+		<!-- #endif -->
+       <div class="flx-column ">
+          <div class="s-top">
+            <div class="bard">
+			  <image class="bg-img" :src="require('@/assets/images/club_card_bg2.png')"></image>
+              <image class="image"  :src="require('../../assets/images/vip_tit_img2.png')" mode="widthFix"></image>
+              <text class="text">{{e18n('mine.vip_benefits')}}</text>
+            </div>
+            <div class="rights">
+                <div v-for="($item,$idx) in vip.vip_privilege" class="item">
+                    <image class="image" :src="$item.image" mode="widthFix"></image>
+                    <text class="text">{{$item.title}}</text>
+                </div>
+              </div>
+          </div>
+          <div class=" flx-column  pdw5 ">
+            <div  class=" flx-column  bg-grey s-bottom">
+              <div class="s-title "><text class="text">{{e18n('mine.select_package')}}</text></div>
+                <div class="s-package">
+                    <div v-for="($item,$idx) in vip.package" class="item" @click="itemClkHandle($item)">
+                      <div class="item-content">
+                        <div class="tag"><text class="text">{{$item.name}}</text></div>
+                        <text class="coin">￥{{$item.price_desc}}</text>
+                        <div class="original"><text class="delline">{{$item.description}}</text></div>
+						<div class="active" v-if="$item.active">
+										   <image :src="require('@/assets/images/active.png')" style="position:absolute;left:auto;top:auto; right:0rpx;bottom:0rpx;width:45rpx;height:45rpx;"></image> 
+										  </div>
+					  </div>
+                    </div>
+              </div>
+            </div>
+          </div>
+        </div>
+		<ks-poup  direction="bottom" :show_stus="show"  @close="show_off_handle" :mask="true">
+			<div class="s-pay-way">
+			  <div v-if="vip.wxpay_switch==1" class="div">
+			    <image class="image" :src="require('../../assets/images/upweixin.png')" @click="payClkHandle('weixin')" mode="widthFix"></image>
+			    <text class="text">{{e18n('wechat_payment')}}</text>
+			  </div>
+			  <!-- #ifndef MP-WEIXIN-->
+									 <div v-if="vip.alipay_switch==1" class="div">
+									   <image class="image" :src="require('../../assets/images/upzfb.png')" @click="payClkHandle('zfb')" mode="widthFix"></image>
+									   <text class="text">{{e18n('alipay_payment')}}</text>
+									 </div>
+			  <!-- #endif -->
+			</div>
+		</ks-poup>
+    </block>
+	   <ks-message-center :pagename="pagename"></ks-message-center>
+  </div>
+</template>
+<script>
+export default {
+  data(){
+	  return {
+		  anid:'',
+		  chaps:'',
+		  return_url:'',
+		  init:false,
+		  show:false,
+		  vip:null,
+		  cur_item:null,
+		  exit_time_handle:0,
+		  pagename:'usr_vip',
+	  }
+  },
+  methods:{
+	  ...getApp().globalData.util,
+	  itemClkHandle(item){
+	    this.vip.package.forEach(element => {
+	      element.active=false;
+	    });
+	    item.active=true;
+	    this.cur_item= item;
+	    this.show=true;
+			// this.$refs.popup.open();
+	  },
+	  
+	  show_off_handle(){
+	    this.show=false;
+			// this.$refs.popup.close();
+	  },
+	  pay_suc_handle(){
+	        console.log('pay_suc_handle')
+	       this.util_toast(this.e18n('pay_success'))
+	       this.exit_time_handle=setTimeout(this.util_router_back,1500);
+	    },
+	  pay_err_handle(err){
+	        this.util_toast(this.e18n('pay_faile'))
+	    },
+	   payClkHandle(way){
+	     if(!this.isUnloginAble()){
+	          this.util_router_push('pages/usr_login',{path:'pages/usr_vip',parmas:{anid:this.anid,chaps:this.chaps,return_url:this.return_url}}) // 必须登陆
+	          return;
+	        }
+	      let pay_type={'weixin':1,'zfb':2}[way];
+	      let parmas={
+	                    vip_id: this.cur_item.id,
+	                    pay_type:pay_type,
+	                    scene: 'APP',
+	                    anid:this.anid,
+	                    chap:this.chaps,
+						quit_url:this.makeLocalUrl('pages/usr_vip/index'),
+						return_url:this.makeLocalUrl((this.return_url || 'pages/book_mine')+"/index"),
+	                  }
+	  
+	      switch(way){
+	        case 'weixin':
+	            parmas.scene=this.getSenceType()||"APP";
+	            this.api().createVipPayOrderWithData(parmas,res=>{
+	                this.wxpay(res,this.pay_suc_handle,this.pay_err_handle);
+	            },err=>{
+					  this.util_toast(err,1500,this.pagename)
+	              console.log('weixin err:',err);
+	            });
+	          break;
+	        case 'zfb':
+	            parmas.scene=this.getSenceType()=='APP'?"APP":"H5";
+				parmas.deviceInfo=uni.getDeviceInfo();
+	            this.api().createVipPayOrderWithData(parmas,suc=>{
+	               console.log('alipay suc:',suc);
+	               this.alipay(suc.orderInfo,res=>{
+	                 switch(String(res.resultStatus)){
+	                   case '9000':
+	                      this.util_toast(this.e18n('pay_success'))
+	                      this.exit_time_handle=setTimeout(this.util_router_back,1500);
+	                     break;
+	                  case '6001':
+	                     this.util_toast(this.e18n('pay_faile'))
+	                    break;
+	                  default :
+	                      console.log('alipay switch default:',res.resultStatus);
+	                    break;
+	                 }
+	               })
+	            },error=>{
+	               this.util_toast(error,1500,this.pagename)
+	                console.log('alipay error:',error);
+	            })
+	          break;
+	      }
+	  }
+  },
+  onLoad(params) {
+     this.anid=params.anid;
+     this.chaps=params.chaps;
+     this.return_url=params.return_url;
+	 this.getInitDataCb(()=>{
+		 uni.setNavigationBarTitle({title:this.e18n('mine.vip_club')})
+	 })
+  },
+  onShow() {
+		this.getInitDataCb(()=>{
+				  this.api().vipBaseinfo(res=>{
+					 res.package.forEach(element => {
+						element.active=false;
+					  });
+					this.vip=res;
+					console.log('vip:',res,{anid:this.anid,chaps:this.chaps,return_url:this.return_url});
+					this.init=true;
+				  })
+		})
+  },
+  onHide() {
+      clearTimeout(this.exit_time_handle)
+  },
+}
+</script>
+
+<style lang="less">
+@import './../../assets/styles/style.less';
+page{
+	background-color: @white3;
+}
+.s-bottom{
+      border-bottom-left-radius: 25rpx;
+      border-bottom-right-radius: 25rpx;
+      padding: 0rpx 30rpx 120rpx 30rpx;
+      .s-title{
+        justify-content: center;
+        align-items: center;
+        margin-top: 20rpx;
+        margin-bottom: 40rpx;
+		display: flex;
+        .text{
+          font-size: 32rpx;
+          font-weight: 800;
+          color: @black2;
+        }
+      }
+      .s-package{
+        align-items: flex-start;
+        align-content: flex-start;
+        justify-content: space-between;
+		display: flex;
+		flex-direction: row;
+        flex-wrap:  wrap;
+        .item{
+		 justify-content: stretch;
+		 align-items: stretch;
+		 flex-wrap: wrap;
+		 display: flex;
+		 flex-direction: row;
+		 margin-bottom: 45rpx;
+		 width:300rpx;
+         .item-content{
+			flex-direction: column;
+			display: flex;
+			flex:1;
+			background-color: @white3;
+			border-radius: 15rpx;
+			position: relative;
+			padding:  25rpx 10rpx;
+				  .coin{
+					font-size: 44rpx;
+					color: @black2;
+					font-weight: 800;
+					padding-top: 20rpx;
+					padding-bottom: 20rpx;
+					}
+                .original{
+					display: flex;
+					flex-direction: row;
+                    .orig{
+						font-size: 28rpx;
+						color: @grey2;
+					}
+                    .delline{
+					  font-size: 24rpx;
+					  color: @grey2;
+                      // text-decoration: line-through;
+                    }
+                }
+                .tag{
+                  position: absolute;
+                  right: 0rpx;
+                  top: 0rpx;
+                  background-color: @them;
+                  border-top-right-radius: 15rpx;
+                  border-bottom-left-radius: 15rpx;
+                  .text{
+                    font-size: 28rpx;
+                    color: @white;
+                    padding: 5rpx 20rpx;
+                  }
+                }
+				.active {
+				      border-color: @them; 
+				      border-width: 5rpx;
+				      border-radius: 15rpx;
+					  border-style: solid;
+				      position: absolute;
+				      right: 0rpx;
+				      left: 0rpx;
+				      top: 0rpx;
+				      bottom: 0rpx;
+				  }
+         }
+        }
+      }
+}
+
+.s-top{
+  background-color: @black;
+  padding: 30rpx 30rpx 0rpx 30rpx;
+  flex-direction: column;
+  display: flex;
+  .bard{
+    padding: 20rpx;
+    flex-direction: column;
+	position: relative;
+	display: flex;
+    .image{
+      width: 200rpx;
+	  height: 80rpx;
+      margin-bottom: 20rpx;
+    }
+    .text{
+      font-size: 28rpx;
+      font-weight: 800;
+      color: @black2;
+    }
+  }
+  .rights{
+          padding-top: 10rpx;
+          background-color: @black2;
+          justify-content: space-between;
+          align-items: flex-start;
+          flex-wrap: wrap;
+		  flex-direction: row;
+		  display: flex;
+          .item{
+            width: 200rpx;
+            margin-bottom: 10rpx;
+            flex-direction: column;
+            align-items: center;
+            border-radius: 20rpx;
+			display: flex;
+            /* background-color: @white; */
+            padding: 10rpx 0rpx;
+            .image{
+              width: 80rpx;
+				height: 80rpx;
+              margin-bottom: 8rpx;
+            }
+            .text{
+				 width: 200rpx;
+				 .txt-lines(1);
+				 text-align: center;
+              font-size: 28rpx;
+              font-weight: 800;
+              color: @white3;
+            }
+          }
+        }
+}
+
+.s-pay-way{
+  background-color: @white;
+  justify-content: space-around;
+  padding: 40rpx 80rpx 80rpx 80rpx;
+  display: flex;
+    flex-direction: row;
+  .div{
+    justify-content: space-around;
+    flex-direction: column;
+    align-items: center;
+	display: flex;
+    .image{
+        width: 130rpx;
+		height: 150rpx;
+      }
+    .text{
+      font-size: 28rpx;
+      color: @grey;
+    }
+  }
+  
+}
+.wrapper {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+.title {
+  text-align: center;
+  color: #212121;
+}
+</style>

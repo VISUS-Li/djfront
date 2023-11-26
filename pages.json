@@ -1,0 +1,251 @@
+{
+	"tabBar": {
+		"color": "#777777",
+		"selectedColor": "#ffffff",
+		"borderStyle": "black",
+		"backgroundColor": "#000000",
+		"fontSize":"20px",
+		"list": [
+				{
+					"pagePath": "pages/video_lib/index",
+					"text": ""
+				}, 
+				{
+					"pagePath": "pages/video_recomd/index",
+					"text": ""
+				},
+				{
+					"pagePath": "pages/video_case/index",
+					"text": ""
+				},
+				{
+					"pagePath": "pages/video_mine/index",
+					"text": ""
+				}
+		]
+	},
+
+
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		// {
+		// 	"path" : "pages/page_test/index",
+		// 	"style": {
+		// 			"navigationStyle": "custom",
+		// 			"app-plus" : {
+		// 				"background":"#000000"
+		// 			}
+		// 		}
+		// },
+		{
+			"path" : "pages/video_recomd/index",
+			"style": {
+					"navigationStyle": "custom",
+					"app-plus" : {
+						"background":"#000000"
+					}
+				}
+		},
+		{
+			"path" : "pages/video_mine/index",
+			"style": {
+					"navigationStyle": "custom",
+					"app-plus" : {
+						"background":"#333333"
+					}
+				}
+		},
+		{
+			"path": "pages/video_lib/index",
+			"style": {
+						"navigationStyle": "custom",
+						"app-plus" : {
+							"background":"#333333"
+						}
+					}
+		},
+		
+		{
+			"path" : "pages/video_player/index",
+			"style": {
+					"navigationStyle": "custom",
+					"app-plus" : {
+						"background":"#333333"
+					}
+				}
+		},
+		{
+			"path" : "pages/video_case/index",
+			"style": {
+					"navigationStyle": "custom",
+					"app-plus" : {
+						"background":"#333333"
+					}
+				}
+		},
+		{
+			"path" : "pages/video_welfare/index",
+			"style": {
+					"navigationBarTextStyle": "black",
+					"navigationBarBackgroundColor": "#a3a3a3",
+					"backgroundColor": "#333333",
+					"app-plus" : {
+						"background":"#333333"
+					},
+					"h5": {
+						"titleNView": false
+					}
+				}
+			
+		},
+		{
+			"path": "pages/video_search/index",
+			"style": {
+						"navigationBarTextStyle": "white",
+						"navigationBarBackgroundColor": "#000000",
+						"backgroundColor": "#333333",
+						"app-plus" : {
+							"background":"#333333"
+						},
+						"h5": {
+							"titleNView": false
+						}
+					}
+		},
+		{
+			"path": "pages/webtext/index",
+			"style": {
+						"navigationBarTextStyle": "white",
+						"navigationBarBackgroundColor": "#000000",
+						"backgroundColor": "#333333",
+						"app-plus" : {
+							"background":"#333333"
+						},
+						"h5": {
+							"titleNView": false
+						}
+					}
+		},
+		{
+			"path": "pages/usr_transaction/index",
+			"style": {
+						"navigationBarTextStyle": "white",
+						"navigationBarBackgroundColor": "#000000",
+						"backgroundColor": "#333333",
+						"app-plus" : {
+							"background":"#333333"
+						},
+						"h5": {
+							"titleNView": false
+						}
+					}
+		},
+		{
+			"path": "pages/settings/index",
+			"style": {
+						"navigationBarTextStyle": "black",
+						"navigationBarBackgroundColor": "#a3a3a3",
+						"backgroundColor": "#f2f2f2",
+						"app-plus" : {
+							"background":"#f2f2f2"
+						},
+						"h5": {
+							"titleNView": false
+						}
+					}
+		},
+		{
+			"path": "pages/usr_vip/index",
+			"style": {
+						"navigationBarTextStyle": "black",
+						"navigationBarBackgroundColor": "#a3a3a3",
+						"backgroundColor": "#333333",
+						"app-plus" : {
+							"background":"#333333"
+						},
+						"h5": {
+							"titleNView": false
+						}
+					}
+		},
+		{
+			"path": "pages/usr_recharge/index",
+			"style": {
+						"navigationBarTextStyle": "black",
+						"navigationBarBackgroundColor": "#a3a3a3",
+						"backgroundColor": "#333333",
+						"app-plus" : {
+							"background":"#333333"
+						},
+						"h5": {
+							"titleNView": false
+						}
+					}
+		},
+		{
+			"path": "pages/usr_login/index",
+			"style": {
+						"navigationBarTextStyle": "black",
+						"navigationBarBackgroundColor": "#a3a3a3",
+						"backgroundColor": "#ffffff",
+						"app-plus" : {
+							"background":"#ffffff"
+						},
+						"h5": {
+							"titleNView": false
+						}
+					}
+		},
+		{
+			"path": "pages/record/index",
+			"style": {
+						"navigationBarTextStyle": "white",
+						"navigationBarBackgroundColor": "#000000",
+						"backgroundColor": "#333333",
+						"app-plus" : {
+							"background":"#333333"
+						},
+						"h5": {
+							"titleNView": false
+						}
+							
+					}
+		},
+		{
+			"path": "pages/invitation/index",
+			"style": {
+						"navigationBarTextStyle": "white",
+						"navigationBarBackgroundColor": "#000000",
+						"backgroundColor": "#333333",
+						"app-plus" : {
+							"background":"#333333"
+						},
+						"h5": {
+							"titleNView": false
+						}
+					}
+		},
+		{
+			"path": "pages/customer/index",
+			"style": {
+						"navigationBarTextStyle": "black",
+						"navigationBarBackgroundColor": "#a3a3a3",
+						"backgroundColor": "#333333",
+						"app-plus" : {
+							"background":"#333333"
+						},
+						"h5": {
+							"titleNView": false
+						}
+					}
+		}
+    ],
+	"globalStyle": {
+		"backgroundColor":"#1a1a1a"
+	},
+	"uniIdRouter": {},
+	"style": {
+		"app-plus": {
+			"animationType": "none"
+		}
+	}
+}

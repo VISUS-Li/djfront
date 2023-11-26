@@ -1,0 +1,160 @@
+<template>
+  <div class="flx-column bg-black">
+        <block v-if="!init">
+          <ks-loading-page></ks-loading-page>
+        </block>
+        <block v-else>
+			<div class="flx-column bg-black1 ">
+				  <div class="s-top"> 
+				  <!-- #ifdef H5 -->
+				  	<ks-h5-navi-title :title="e18n('search.search')"></ks-h5-navi-title>
+				  <!-- #endif -->
+				  <div class="pdw5 bg-black1">
+					  <div class="container bg-black2">
+					  	<input id="search" class="s-search " @input="on_march_change" :value="march_str"></input>
+					  	<image class="bg-img" :src="require('../../assets/images/book-icon1.png')" style="width: 50rpx;height: 50rpx; left:30rpx;top:30rpx;right:auto;bottom:auto;"></image>
+					  </div>
+				  </div>
+				  </div>
+				<div class="flx-column bg-black1 pdw5">
+					
+					<div class="bg-black2  flx-column pd2 ">
+					        <block v-if="list_has">
+					          <ks-typography-title :title="e18n('books.all_results')"></ks-typography-title>
+					              <div  class="flx-column ">
+					                  <div  style="padding:20rpx" v-for="item in list" >
+					                      <ks-tybook-hm-item :item="item"  cto="detail"> </ks-tybook-hm-item>
+					                    </div>
+					              </div>
+					        </block>
+					        <block v-else-if="search_has">
+					              <div class="flx-column w100">
+					                <div v-if="search_info.hot_keywords" type="top" class="flx-column w100">
+					                  <ks-typography-title :title="e18n('books.search_popular')"></ks-typography-title>
+					                  <div class="s-hotkey-container pd2"> 
+					                    <text v-for="item in search_info.hot_keywords" @click='keywords_click(item)' class="s-hotkey-txt">{{item}}</text>
+					                  </div>
+					                </div>
+									<ks-typography-title v-if="search_info.recommend" :title="e18n('books.popular_recommedation')"></ks-typography-title>
+								  <div v-if="search_info.recommend" type="hm-item" style="padding:20rpx" v-for="item in search_info.recommend" >
+									<ks-tybook-hm-item :item="item" > </ks-tybook-hm-item>
+								  </div>
+								  <ks-no-more :loading="loading" :vstyle="'color:#545454'"></ks-no-more>
+					              </div>
+					        </block >
+					        <block v-if="no_has">
+								<ks-no-results :tips="e18n('search.none')"></ks-no-results>
+					        </block>
+					</div>
+				</div>
+			</div>
+        </block>
+		 <ks-message-center :pagename="pagename"></ks-message-center>
+  </div>
+</template>
+
+<script>
+export default {
+ 
+  data(){
+	return {
+		page:1,
+		page_size:30,
+		march_str:'', 
+		list:null,
+		search_info:null,
+		init:false,
+		pagename:'video_search',
+	}  
+  },
+  computed:{
+      list_has(){
+        return this.list && this.list.length>0;
+      },
+      search_has(){
+        return (this.search_info!=null && this.march_str=='');
+      },
+      no_has(){     
+        return this.march_str!=''&& (!this.list ||this.list.length<1);
+      }
+  },
+  methods:{
+	   ...getApp().globalData.util,
+	   keywords_click(text){
+	     this.mathc_change_set(text)
+	   },
+	   on_march_change(e){
+	     console.log('on_march_change',e);
+	     this.mathc_change_set(e.detail.value)
+	   },
+	   mathc_change_set(text){
+	     this.march_str = text;
+		 this.api().search(this.march_str,this.page,this.page_size,res=>{
+		   this.init=true;
+		   this.list=res.search.length>0?res.search:null;
+		   this.search_info=res;
+		 })
+	   }
+  },
+  onLoad(params) {
+	  this.getInitDataCb(()=>{
+		   uni.setNavigationBarTitle({title:this.e18n('search.search')})
+		   this.mathc_change_set('')
+	  })
+  },
+  onShow() {
+  },
+  onHide() {
+  }
+ 
+}
+</script>
+
+
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+	page{
+		background-color: @black1;
+	}
+
+.s-top{
+      background-color: @black2;
+	  z-index: 15;
+	  position: sticky;
+	  top:0;
+	  .container{
+		  position: relative;
+		  padding: 15rpx 0rpx;
+		  .s-search{
+		      line-height: 60rpx;
+		      height: 76rpx;
+		      font-size: 45rpx;
+		      color: @black;
+		      border: 1rpx solid @white2;
+		      border-radius: 50rpx;
+		      background-color: @white;
+		      padding-left: 80rpx;
+		  }
+	  }
+      
+}
+
+.s-hotkey-container{
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: flex;
+  .s-hotkey-txt{
+    background-color: @black3;
+    border-radius: 10rpx;
+    padding: 10rpx 20rpx;
+    margin-left: 20rpx;
+    margin-bottom: 20rpx;
+	font-size: 30rpx;
+	color: @white3;
+  }
+}
+
+</style>

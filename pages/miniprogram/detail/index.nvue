@@ -1,0 +1,63 @@
+<template>
+	<view class="warper">
+		<image :src="item.image" mode="aspectFill"></image>
+		<div class="pd3"></div>
+		<text class="title">{{item.title}}</text>
+		<div class="pd5"></div>
+		<text class="content">{{item.content}}</text>
+		<div style="margin-bottom: 180rpx;background-color: #4D77FD;width:70%;display: flex; flex-direction: row;justify-content: center; border-radius: 25rpx;">
+			<text @click="util_router_back()" style="color: #ffffff;font-size: 28rpx;padding: 25rpx;" >返回</text>
+			<text @click="util_toast('收藏成功')" style="color: #ffffff;font-size: 28rpx;padding: 25rpx;" >收藏</text>
+		</div>
+		
+	</view>
+</template>
+
+<script>
+	import $pdata from '@/pages/miniprogram/pdata.js';
+	import ADManager from '@/helper/ADManager.js';
+	export default {
+		data() {
+			return {
+				id:'',
+				item:'',
+			}
+		},
+		methods: {
+			...getApp().globalData.util,
+			
+		},
+		onLoad(params) {
+			uni.setNavigationBarTitle({
+				title:"详情"
+			})
+			ADManager.init();
+			this.id=params.id;
+			this.item=$pdata.getDataById(this.id);
+		}
+	}
+</script>
+
+<style lang="less" scoped>
+	@import './../../../assets/styles/style.less';
+	.warper{
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		image{
+			width: 100%;
+		}
+		.title{
+			font-size: 40rpx;
+			color: @black;
+			font-weight: 800;
+			text-align: center;
+		}
+		.content{
+			font-size: 28rpx;
+			color: @grey;
+			line-height: 65rpx;
+			padding: 35rpx;
+		}
+	}
+</style>

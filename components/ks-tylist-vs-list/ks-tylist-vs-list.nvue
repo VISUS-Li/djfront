@@ -1,0 +1,69 @@
+<template>
+	<div :class="vslist_root" >
+		<div v-for=" item in list" :class="isbelow?'smr':'smb'">
+			<ks-tybook-vs-item  @tapclick="$emit('tapclick',item)" :item="item" ></ks-tybook-vs-item>
+		</div>
+		<div  v-for="item in  spans" class="span"></div>
+	</div>
+</template>
+<script>
+	export default {
+        props:{
+            list:Array,
+        },
+        methods:{
+			...getApp().globalData.util,
+        },
+		data(){
+			return {
+				couls:4
+			}
+		},
+		computed:{
+			spans(){
+				if(this.isbelow) return [];
+				let len=  this.couls-this.list.length%this.couls;
+				let _spans=[];
+				for( let i=0;i<len;i++) _spans.push('');
+				return _spans;
+			},
+			isbelow(){
+				return this.list.length <this.couls;
+			},
+			vslist_root(){
+				return this.isbelow?"flext-start":"flext-between"
+			}
+		}
+    }
+</script>
+
+<style lang="less">
+    @import url("./../../assets/styles/style.less");
+	
+    .flext-between {
+        display: flex;
+        flex-wrap: wrap;
+    	align-items: flex-start;
+    	justify-content: space-between;
+		flex-direction: row;
+    }
+    
+    .flext-start{
+    	display: flex;
+    	flex-wrap: wrap;
+    	align-items: flex-start;
+    	justify-content: flex-start;
+		flex-direction: row;
+    }
+    .span{
+    	width: 150rpx;
+    }
+	.smr{
+		margin-right: 20rpx;
+		margin-bottom: 20rpx;
+	}
+	.smb{
+		margin-bottom: 20rpx;
+	}
+
+</style>

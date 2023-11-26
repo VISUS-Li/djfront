@@ -1,0 +1,114 @@
+<template>
+  <div class="flx-column  ">
+    <block v-if="!init">
+      <ks-loading-page></ks-loading-page>
+    </block>
+    <block v-else>
+		<!-- #ifdef H5 -->
+			<ks-h5-navi-title :title="e18n('transaction_list')"></ks-h5-navi-title>
+		<!-- #endif -->
+			<div class="flx-column  pdw5">
+				<div  v-for="(sub_item,sub_idx) in list" class="pdh3" >
+					<div class="item" >
+					 <div class="top">
+					    <text class="text">{{sub_item.type}}</text>
+					    <text class="right text">{{e18n('num_coin',{num:sub_item.value_desc,coin:''})}}</text>
+						<image :src="require('@/assets/images/bookbean_icon.png')" style="position: absolute; right:10rpx;top:5rpx; width: 30rpx;height: 30rpx;"></image>
+					  </div>
+					  <text class="text">{{sub_item.created_at}}</text>
+					  <div class="line"></div>
+					</div>
+				</div>
+				<div class="w100"><ks-no-more :loading="!no_more" :vstyle="'color:#545454'"></ks-no-more></div>
+			</div>   
+	</block>
+	   <ks-message-center :pagename="pagename"></ks-message-center>
+  </div>
+</template>
+
+<script>
+	export default {
+		data(){
+			return {
+				init:false,
+				page:1,  //第几页 从 1开始
+				pageSize:50,  //第几页 从 1开始
+				loading:false,
+				list:[],
+				no_more:false,
+				pagename:'usr_transaction',
+			}
+		},
+		methods:{
+				...getApp().globalData.util,
+			scrollBtmHandle(){
+			    this.page++;
+			    this.loading=true;
+			    this.api().financelist(this.page,this.pageSize,(res)=>{
+								// res.list=[{type:'因此无法',created_at:'2018-12-05',value:88},{type:'因此无法',created_at:'2018-12-05',value:88},{type:'因此无法',created_at:'2018-12-05',value:88},{type:'因此无法',created_at:'2018-12-05',value:88},];
+			                  this.list=[...this.list,...res.list];
+			                  this.loading=false;
+			                  this.no_more=(res.list.length<this.pageSize);
+			                  this.init=true;
+			              })
+			}
+		},
+
+	  onLoad(params) {
+		this.getInitDataCb(()=>{
+			uni.setNavigationBarTitle({
+				title:this.e18n('transaction_list')
+			})
+			this.page=0;
+			this.scrollBtmHandle();
+		})
+	  },
+	  onReachBottom(){
+		  console.log('onReachBottom22')
+		   this.scrollBtmHandle()
+	  },
+	  onShow() {
+	  },
+	  onHide() {
+	  }
+ 
+}
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+	page{
+			background-color: @black2;
+		}
+  .item{
+    flex-direction: column;
+	display: flex;
+	flex:1;
+    .text{
+      font-size: 28rpx;
+      color: @grey2;
+    }
+    .line{
+      height: 25rpx;
+      border-bottom-width: 2rpx;
+      border-bottom-color: @black3;
+    }
+    .top{
+      justify-content: space-between;
+      margin-bottom: 8rpx;
+	  flex-direction: row;
+	  display: flex;
+	  position: relative;
+      .text{
+        font-size: 32rpx;
+        color: @white3;
+      }
+      .right{
+        padding-right: 45rpx;
+        font-size: 32rpx;
+		font-weight: 800;
+        color: @them;
+      }
+    }
+  }
+</style>

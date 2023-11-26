@@ -1,0 +1,392 @@
+<template>
+  <div class="flx-column " >
+	  <block v-if="init===2">
+	  	<ks-miniprogram></ks-miniprogram>
+	  </block>
+    <block v-if="!init">
+         <ks-loading-page></ks-loading-page>
+    </block>
+    <block v-if="init===1">
+      <div  class="flx-column ">
+         <div class="pd5 title-bar s-top bg-black" style="position: sticky;top: 0;z-index: 100;">  
+			  <div class="sleft" @click="loginHandle">
+			    <image :src="user_info.avatar || require('@/assets/images/set_def_tx.png')" class="bg-img"  style="overflow: hidden; border-top-left-radius:  75rpx;	 border-top-right-radius: 75rpx;	 border-bottom-left-radius: 75rpx; border-bottom-right-radius: 75rpx;"></image>
+			  </div>
+              <div class="mid"> 
+				  <text class="name" @click="loginHandle"> {{user_info.nickname || e18n('mine.un_logined')}}</text> 
+				  <text class="rid">{{('ID:'+user_info.rid)}}</text>
+				  <text class="un-tip" v-if="!islogin">{{e18n('login.login_tip')}}</text>
+				  <!-- <text :class="islogin?'rid':'un-tip'">{{islogin?('ID:'+user_info.rid):(e18n('login.login_tip')) }}</text> -->
+			  </div>
+              <div class="right"><text class="time">{{read_time || 0}} {{e18n('minute')}}</text><text class="desc">{{e18n('mine.reading_time_today')}}</text></div>
+         </div>
+         <div class="pdw5 flx-column  bg-black">
+            <div class="pd1"></div>
+            <div class="s-wallet radius-15" @click="walletClkHandle"> 
+                <div class="tag"><text class="text">{{e18n('mine.my_wallet')}}</text></div>
+                  <div class="left">
+                      <text class="num">{{base_info.coin ||'0'}} </text>
+                      <text class="desc">{{e18n('balance')}} </text>
+                  </div>
+                  <div class="mid">
+                      <text class="num"> {{base_info.today_coin || '0'}}</text>
+                      <text class="desc">{{e18n('mine.today_coin',{coin:coinName()})}} </text>
+                  </div>
+                  <div class="right">
+                    <text class="text radius-15">{{e18n('mine.recharge_now')}}</text>
+                  </div>
+              </div>
+            <div class="pd2"></div>
+            <div class="s-vip radius-15" v-if="hasvip" @click="vipClkHandle" >
+               <image  :src="require('@/assets/images/vip_center_bg.png')" class="bg-img radius-15" ></image>
+			   <div class="left">
+                <image class="image"  :src="require('@/assets/images/vip_tit_img2.png')" ></image>
+                <text class="desc text" >{{isvip? e18n('mine.vip_expires_attion',{time:user_info.viptime}):e18n('mine.vip_benefits')}}</text>
+                </div>
+                <div class="right"><text class="text radius-15" >{{isvip? e18n('mine.vip_club'):e18n('to_open')}}</text></div>
+            </div> 
+            <div class="pd2"></div>
+			<div class="pd2"></div>
+			<div class="pd2"></div>
+         </div>
+         <div class=" pd5  flx-column s-but-list relative  mw5 bg-white3" style="top:-60rpx;">
+            <div v-for="(pitem,pidx ) in item_list"  @click="tabClkHandle(pitem)" class="tab-button">
+                 <div class="left">
+                       <text class="iconfont"> {{(['&#xe60c;','&#xe7d9;','&#xe636;','&#xe613;','&#xe7e2;','&#xe8b7;'][pidx])}}</text>
+                       <text class="text">{{pitem.name}}</text>
+                  </div>
+                    <text class="iconfont right">&#xe673;</text>
+            </div>
+             <div class="s-exit" v-if="islogin" @click="logoutHandle"><text class="text iconfont"> &#xe619; {{e18n('logout')}}</text></div>
+         </div>
+			<div class="tabbar-height"></div>
+      </div>
+	
+    </block>
+	 <ks-message-center :pagename="pagename" :agree="true"></ks-message-center>
+  </div>
+</template>
+<script>
+import EventBus from '@/helper/EventBus.js';
+export default {
+  data(){
+	  return  {
+			user_info:null,
+			base_info:null,
+			item_list:[
+				{name:this.e18n('mine.wealerf_title',{'coin':this.coinName()}),icon:'&#xe60c;',path:'pages/video_welfare',query:{}},
+				{name:this.e18n('mine.invite_title',{'coin':this.coinName()}),icon:'&#xe60c;',path:'pages/invitation',query:{}},
+				{name:this.e18n('mine.reading_records'),icon:'&#xe636;',path:'pages/record',query:{}},
+				{name:this.e18n('transaction_list'),icon:'&#xe613;',path:'pages/usr_transaction',query:{}},
+				{name:this.e18n('custom_service'),icon:'&#xe7e2;',path:'pages/customer',query:{}},
+				{name:this.e18n('setting'),icon:'&#xe8b7;',path:'pages/settings',query:{}},
+				],
+			pagename:'book_mine',
+			init:0,
+		  }
+  },
+  methods:{
+	    ...getApp().globalData.util,
+		refreshMyinfo(){
+		  this.user_info=this.getUserinfo();
+		  console.log('refreshMyinfo 1',this.user_info);
+		  this.refreshBaseInfo();
+		},
+		walletClkHandle(){
+		  this.util_router_push('pages/usr_recharge');
+		},
+		vipClkHandle(){
+		  this.util_router_push('pages/usr_vip');
+		},
+		tabClkHandle(item){
+		    let path=item.path;
+		    let query = item.query;
+		    console.log('push :',path);
+		    this.util_router_push(path,query);
+		},
+		unicodeToText(string) {
+	
+			return string
+		},
+		refreshBaseInfo(){
+		  this.api().personal(res=>{
+		    this.base_info=res;
+		    this.init=this.getInitStaus();
+			if( this.init=1){
+				setTimeout(()=>{this.firstHandle(this.pagename)},1500);
+			}
+		    console.log('base lists ',this.base_info,this.user_info);
+		  })
+		},
+		loginHandle(){
+			if(!this.isLogin()){
+				this.login(suc=>this.refreshMyinfo(),err=>{console.log(err)});
+			}
+		},
+		logoutHandle(){
+		    this.util_dialog({
+							pagename:this.pagename,
+							message:this.e18n('logout_warn'),
+							buttons:[{text:this.e18n('sure')},{text:this.e18n('cancel')}],
+							success:(res)=>{
+									// if(!res.confirm)	return ;
+								this.loginOut();
+								this.refreshMyinfo();
+							}
+						})
+		},
+  },
+  onShow () {
+	  console.log('mine  on show')
+	  this.keeptabBarTxt();
+  	 this.getInitDataCb(()=>{
+		  uni.setNavigationBarTitle({title:this.e18n('personal') })
+		 this.refreshMyinfo();
+	 });
+	 this.addEventListener(EventBus.EVE_LOGINED,this.refreshMyinfo)
+  },
+  onHide() {
+  	 this.removeEventListener(EventBus.EVE_LOGINED,this.refreshMyinfo)
+  },
+  
+  computed:{
+		islogin(){
+			let ret = !!(this.user_info && this.user_info.access_token) 
+			 console.log('islogin1 ',ret)
+	       return ret 
+	    },
+	    hasvip(){
+	        return  this.hasVipOption();
+	    },
+	    isvip(){
+	        return (this.user_info && this.user_info.is_vip==1);
+	    },
+	    read_time(){
+	      if(this.base_info) return Math.round(this.base_info.read_time);
+	      return 0;
+	    }
+  },
+}
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+	page{
+		background-color: @black2;
+	}		
+  .s-exit{
+    justify-content: center;
+    align-items: center;
+	flex-direction: row;
+	display: flex;
+	flex:1;
+    .text{
+	   padding: 15rpx;
+      font-size: 24rpx;
+      color: @black2;
+    }
+  }
+  .s-but-list{
+	  .radius-box(15rpx);
+      .tab-button{
+        justify-content: space-between;
+        align-items: center;
+		flex-direction: row;
+		display: flex;
+		height: 100rpx;
+        .left{
+			flex-direction: row;
+			display: flex;
+        }
+		.iconfont{
+			font-size: 40rpx;
+			padding-right: 15rpx;
+			color: @black1;
+		}
+        .text{
+          font-size: 30rpx;
+          font-weight: 600;
+           	color: @black;
+        }
+      }
+
+  }
+  .s-panle-hat{
+    background-color: @white;
+    border-top-left-radius: 25rpx;
+    border-top-right-radius: 25rpx;
+    height: 25rpx;
+  }
+.s-vip{
+    height: 160rpx;
+    padding: 20rpx 20rpx;
+    align-items:center;
+    justify-content: space-between;
+	display: flex;
+	flex-direction: row;
+	position: relative;
+    .left{
+      flex-direction: column;
+      justify-content: space-around;
+	  display: flex;
+	  position: relative;
+      .image{
+        height: 60rpx;
+		width: 95rpx;
+		margin-bottom: 20rpx;
+      }
+      .text{
+        color: @white3; //#EBD8B4;
+        font-size: 32rpx;
+      }
+    }
+    .right{
+		position:absolute;
+		right:20rpx;
+      .text{
+        background-color:@white2;// #EBD8B4;
+        padding: 10rpx 20rpx;
+        font-size: 28rpx;
+        color: @black3;
+      }
+    }
+
+}
+.s-top{
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: stretch;
+  .sleft{
+	 width: 130rpx;
+	 height: 130rpx;
+	 position: relative;
+  }
+  
+  .mid{
+    padding-left: 20rpx;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: flex-start;
+	display: flex;
+	 width: 350rpx;
+    .name{
+      font-size: 36rpx;
+      font-weight: 800;
+      color:@white;
+      .txt-lines(1);
+	   width: 350rpx;
+	   margin-bottom: 20rpx;
+    }
+    .rid{
+      font-size: 28rpx;
+      color:@white;
+	   width: 350rpx;
+	   .txt-lines(1)
+    }
+	  .un-tip{
+			font-size: 28rpx;
+		    color:@black3;
+			.txt-lines(1)
+		}
+  }
+  .right{
+    flex:1;
+	margin-left: 10rpx;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+	display: flex;
+    .time{
+      font-size: 32rpx;
+      font-weight: 800;
+      color: @them;
+	  .txt-lines(1)
+    }
+    .desc{
+      font-size: 28rpx;
+      color:@white;
+	  .txt-lines(1)
+    }
+  }
+}
+
+.s-wallet{
+  background-color: @black3;
+  display: flex;
+  flex-direction: row;
+  position: relative;
+  height: 140rpx;
+  padding-top: 20rpx;
+  padding-left: 20rpx;
+  padding-right: 20rpx;
+  padding-bottom: 10rpx;
+  .left{
+    flex:40;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+	display: flex;
+    .num{
+      font-size: 36rpx;
+      font-weight: 800;
+      color: @orange
+    }
+    .desc{
+      font-size: 30rpx;
+      color: @white2
+    }
+  }
+  .mid{
+    flex:35;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+	display: flex;
+    .num{
+      font-size: 36rpx;
+      font-weight: 800;
+      color: @orange
+    }
+    .desc{
+      font-size: 30rpx;
+      color: @white2
+    }
+  }
+  .right{
+    flex:30;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+	display: flex;
+    .text{
+      background-color: @white2;
+      padding: 10rpx 20rpx;
+      font-size: 28rpx;
+      color: @black3;
+    }
+  }
+
+  .tag{
+    background-color: @them;
+    position: absolute;
+	top: 0;
+	left: 0;
+	 align-items: center;
+	 justify-content: center;
+	 display: flex;
+	  flex-direction: row;
+	border-top-left-radius: 15rpx;
+	border-top-right-radius: 0rpx;
+	border-bottom-left-radius: 0rpx;
+	border-bottom-right-radius: 15rpx;
+    .text{
+      padding: 4rpx 10rpx;
+      font-size: 24rpx;
+	    color: #fff;
+	    display: flex;
+    }
+  }
+}
+
+</style>

@@ -1,0 +1,187 @@
+<template>
+ <div class="root">
+	 <uni-transition mode-class="fade" :show="winstus">
+		 <div class="full center" v-if="winstus">
+		     <div class="s-full msk" @click="mskHandle" v-if="windata.msk" style="z-index: 0;"></div>
+		     <div class="panel first" style="z-index: 100;">
+		       <text class="title" v-if="windata.title">{{windata.title}}</text>
+		       <text class="subtitle" v-if="windata.sub_title">{{windata.sub_title}}</text>
+		       <div class="content"><text class="num">{{windata.content}}</text></div>
+		       <text class="tiptitle" v-if="windata.tip_title">{{windata.tip_title}}</text>
+		       <div class="bottom-btns">
+				    <text @click="closeHandle" class="canbtn" v-if="windata.cancel">{{windata.cancel}}</text>
+				    <text @click="okHandle"  class="okbtn">{{windata.ok}}</text>
+			   </div>
+		      </div>
+		 </div>
+	 </uni-transition>
+ </div>
+</template>
+
+<script>
+import EventBus from '@/helper/EventBus.js';
+var eve_handle=null;
+export default {
+  data(){
+    return {
+		winstus:false,
+        // windata:{"title":'新用户大礼包', "sub_title":"邀请好友，畅享阅读,更有精彩好礼送不停！",  "tip_title":"点下方按钮，立即收下！", 'content':'75!','cancel':'','ok':"愉快收下！",msk_click_able:false,msk:false },
+    }
+  },
+  props:{
+	  windata:null,
+  },
+  computed:{
+	  
+  },
+  methods:{
+	   ...getApp().globalData.util,
+	   okHandle(){
+		   if(this.windata!=null){
+			   let cb=this.windata['suc'] || null;
+			   if(cb) cb();
+		   }
+		   this.$emit('close')
+	   },
+	   closeHandle(){
+		   if(this.windata!=null){
+			   let cb=this.windata['fail'] || null;
+			   if(cb) cb();
+		   }
+		   this.$emit('close')
+	   },
+	   mskHandle(){
+		  if(this.windata && this.windata.msk_click_able){
+			  this.closeHandle();
+		  }
+	   }
+  },
+  created() {
+  	this.$watch('windata',(v1,v2)=>{
+		this.winstus=!!v1;
+		console.log('iwatched',this.winstus);
+	})
+  }
+ 
+}
+</script>
+
+<style lang="less" scoped>
+  @import './../../assets/styles/style.less';
+  .root{
+    position: fixed;
+
+    .full{
+      position: fixed;
+      left:0;
+      right:0;
+      top:0;
+      bottom: 0;
+    }
+    .s-full{
+      
+	  position: absolute;
+	  left: 0;
+	  right: 0;
+	  top:0;
+	  bottom: 0;
+	  z-index: 0;
+	  width: auto;
+	  height:auto;
+    }
+    .msk{
+      background-color: rgba(0, 0, 0, .35);
+    }
+    .center{
+      display: flex;
+      justify-content: center;
+      align-items: center;
+	  flex-direction: column;
+    }
+    .panel{
+      border-radius: 15rpx;
+      width: 550rpx;
+      min-height: 300rpx;
+      background-color: @white;
+    }
+
+    .first{
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: stretch;
+        position: relative;
+		top:-150rpx;
+        .title{
+          font-size: 36rpx;
+          font-weight: 600;
+          color: @black;
+          padding: 10rpx;
+          text-align: center;
+        }
+        .subtitle{
+          font-size: 28rpx;
+          color: @grey;
+          padding: 10rpx;
+          line-height: 40rpx;
+          text-align: center;
+        }
+        .content{
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          align-items: center;
+           flex:5;
+		   padding: 15rpx;
+          .num{
+              font-size: 32rpx;
+			  line-height: 48rpx;
+              // font-weight: 600;
+              color: @grey;
+              text-align: center; 
+			  flex:1;
+			  word-wrap: break-word;
+			  flex-wrap: wrap;
+			  word-break: break-all;
+          }
+        }
+
+      .tiptitle{
+          font-size: 28rpx;
+          color: @grey;
+          padding: 10rpx;
+          line-height: 40rpx;
+          text-align: center;
+        }
+		.bottom-btns{
+			margin-top: 15rpx;
+			display: flex;
+			flex-direction: row;
+			border-top: solid 1rpx @white3;
+			justify-content: space-between;
+			align-items: center;
+			background-color: @white2;
+			border-bottom-left-radius: 15rpx;
+			border-bottom-right-radius: 15rpx;
+			.canbtn{
+				flex:1;
+				font-size: 32rpx;
+				color: @grey2;
+				font-weight: 600;
+				padding: 20rpx;
+				text-align: center;
+			}
+			.okbtn{
+			  flex:1;
+			  font-size: 32rpx;
+			  color:@them;
+			  font-weight: 600;
+			  padding: 20rpx;
+			  text-align: center;
+			}
+		}
+    }
+  }
+
+
+</style>

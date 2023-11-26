@@ -1,0 +1,454 @@
+<template>
+<div class="player-root" :style="vstyle"  @touchstart="onTouchStarted"  @touchmove="onTouchMoved"   @touchend="onTouchEnd">
+<div class="v-container"  v-if="item" :style="vstyle" >
+		<video class="video" :style="vstyle" 
+		:id="video_id"
+		@loadedmetadata="onVideoLoaded"
+		:src="item.src"  @ended="onPlayEnd" :auto-play="false"
+		:muted="muted && muted_copy"
+		:playsinline="muted  && muted_copy"
+		object-fit="fill"
+		:show-center-play-btn="false"
+		:show-play-btn="false"
+		:controls="false"
+		:skip-hidden-item-layout="true"
+		:enable-progress-gesture="false"
+		></video>
+		<ks-loading-page v-if="loading" :vstyle="'position: absolute;'"></ks-loading-page>
+		<ks-play-btn class="play-btn" v-if="!item.pstus && !progress_module" :size="80" ></ks-play-btn>
+	</div>
+	<div class="cover" v-if="item"  @tap.stop="onTapVideoHandle">
+		<div class="menus">
+			<!-- #ifdef MP-WEIXIN -->
+				<button class="grp" open-type="share">
+					<text class="iconfont">&#xe608;</text>
+					<text class="txt">{{formatBookHots(item.learn_sum)}}</text>
+				</button>
+			<!-- #endif -->
+			<!-- #ifndef MP-WEIXIN -->
+			<div class="grp" @click.stop="invitaClkHandle">
+				<text class="iconfont">&#xe608;</text>
+				<text class="txt">{{formatBookHots(item.learn_sum)}}</text>
+			</div>
+			<!-- #endif -->
+			
+			<div class="grp" @click.stop="collectHandle">
+				<text :class="['iconfont',item.is_collected?'active':'']">&#xe630;</text>
+				<text class="txt">{{formatBookHots(item.collec_num)}}</text>
+			</div>
+			<div class="grp" @click.stop="subShowHandle">
+				<text class="iconfont">&#xe641;</text>
+				<text class="txt">{{e18n('selections')}}</text>
+			</div>
+			
+			<!-- #ifdef H5 -->
+				<div class="grp" @click.stop="muteReleaseClick" v-if="muted && muted_copy">
+					<text class="iconfont">&#xeca5;</text>
+					<uni-transition mode-class="fade" :show="muted && muted_copy">
+						 <div class="kstoast"><text class="text">{{e18n('open_voice_tip')}}</text></div>
+					 </uni-transition>
+				</div>
+			<!-- #endif -->
+			
+		</div>
+		<div class="bottom">
+			<text class="title" v-if="showtitle">{{e18n('sel_idx',{'idx':item.last_chap})}}</text>
+			<div class="list-info"  v-if="showlist" @click.stop="toplayerHandle">
+				<text class="txt iconfont">&#xe641; {{item.title+" "+e18n('sel_total',{'total':item.subs})}} &#xe673;</text>
+			</div>
+			<div class="progress">
+				<text class="tip" v-if="progress_module">{{progrees_tip}}</text>
+				<div :class="['bar',progress_module?'p-active':'']" >
+					<div :class="['time',progress_module?'p-active':'']" :style="time_progress_style"></div>
+				</div>
+			</div>	
+		</div>
+	</div>
+</div>
+
+</template>
+<script>
+    export default {
+        props:{
+             item:Object,
+			 vstyle:'',
+			 vwidth:0,
+			 muted:false,
+			 loop:{
+			 				 type:Boolean,
+			 				 default:true,
+			 },
+			 showlist:{
+				 type:Boolean,
+				 default:true,
+			 },
+			 showtitle:{
+				 type:Boolean,
+				 default:true,
+			 },
+			 
+        },
+		data(){
+			return {
+				muted_copy:true,
+				isplayend:false,
+				video_id:"id_"+Math.ceil((Math.random()*99999999999999)),
+				video_content:null,
+				duration:0,
+				interval_step:500,
+				touch_timeout_handle:0,
+				timeUpdateInterval:0,
+				touch_start:null,
+				progress_module:0,
+				cur_play_item:null,
+				loading:false,
+				video_loaded_handle:0,
+				touch_start_time:0,
+				touch_end_time:0,
+			}
+		},
+		computed:{
+			time_progress(){
+				return  (this.item && (this.item.seek/this.duration)*this.vwidth) || 0;
+			},
+			time_progress_style(){
+					return `width:${this.time_progress}px;`
+			},
+			progrees_tip(){
+				if(this.item){
+					let seek_format=this.formatTime(this.item.seek);
+					let duration_format=this.formatTime(this.duration);
+					return `${seek_format}/${duration_format}`;
+				}
+			}
+		},
+		methods:{
+			  ...getApp().globalData.util,
+			  onTouchStarted(e){
+				   this.touch_start_time=this.time(false);
+				     console.log('onTouchStarted',  this.touch_start_time,e)
+					 this.touch_start=e.changedTouches[0];
+			  		 this.touch_timeout_handle=setTimeout(()=>{
+					//	  console.log('setTimeout 888888888888888888888888888');
+						 this.progreeModuleHandle(1);
+					 },1500) 
+			  },
+			  onTouchMoved(e){
+				  let touch = e.changedTouches[0];
+				  let dx=touch.pageX - this.touch_start.pageX;
+				  let dy=touch.pageY - this.touch_start.pageY;
+				    console.log('onTouchMoved',e)
+				  if(Math.abs(dy)>Math.abs(dx) && !this.progress_module){
+					   clearTimeout( this.touch_timeout_handle)
+					   return ;
+				  }
+				  if(Math.abs(dx)>15){
+					//   console.log('onTouchMoved 888888888888888888888888888',dy,dx);
+					   this.progreeModuleHandle(1);
+				  }
+				   let pan = ((dx)/this.vwidth)*this.duration;
+				  if(this.progress_module){
+					    this.setSeekPostion(this.touch_start.seek+pan)
+				  }
+			  },
+			  onTouchEnd(e){
+			  		 clearTimeout(this.touch_timeout_handle);
+					this.progreeModuleHandle(0);  
+			  },
+			  onTapVideoHandle(e){
+								 e.stopPropagation()
+								 this.touch_end_time=this.time(false);
+								 if((this.touch_end_time-this.touch_start_time)>100) return;
+			  				  	 // console.log('ontTapVideoHandle',this.touch_start_time,this.touch_end_time)
+			  				     this.item.pstus= this.item.pstus == 1?0:1;
+								 this.pstusChangeHandle();
+			  },
+			  muteReleaseClick(){
+				  if(this.isIOSH5()){
+					  console.log("is In IOS!!!!!!!!!!!!")
+					  this.muted_copy=false;
+				  }else{
+					   console.log("is NOt In IOS!!!!!!!!!!!!")
+					  this.dispatchEvent('video_muted_event',false);
+					  //安卓浏览器中 仅需一次解锁即可
+				  }
+				  
+				  this.pstusChangeHandle();
+			  },
+			  progreeModuleHandle(stus){
+				  clearTimeout(this.touch_timeout_handle);
+				  if(this.progress_module == stus) return;
+				  this.progress_module=stus;
+				  if(!!stus){
+					  if(this.item) {
+						  this.item.pstus=0;
+						  this.touch_start.seek=this.item.seek;
+						  }
+				  }else{
+					   if(this.item) {
+						   this.video_content.seek(this.item.seek);
+						   this.item.pstus=1;
+					   }
+				  }
+				   this.pstusChangeHandle();
+			  },
+			  onVideoLoaded(e){
+				 console.log('onVideoLoaded',this.item?this.item.title:'null')
+				  if(!this.video_content)  this.video_content =uni.createVideoContext(this.video_id,this) 
+				  this.duration=e.detail.duration;
+				  if(this.item) this.video_content.seek(this.item.seek);
+				  if(this.cur_play_item == this.item) {
+					  this.item.pstus=1;
+					  this.pstusChangeHandle();
+				  }
+				  clearInterval(this.timeUpdateInterval);
+				  this.loading=false;
+				  this.timeUpdateInterval = setInterval(this.timeUpdateHandel,this.interval_step);
+			  },
+			  timeUpdateHandel(){
+				  if(this.item&&this.item.pstus==1  && !this.progress_module){
+					  let postion = this.item.seek+ (this.interval_step/1000);
+					  if(postion>this.duration && this.loop) postion=0;
+					  this.setSeekPostion(postion);
+				  }
+			  },
+			  setSeekPostion(ps){
+				  this.item.seek=ps || 0;
+				  if(this.item.seek<0) this.item.seek=0;
+				  if(this.item.seek>(this.duration)) this.item.seek=this.duration;
+			  },
+			  onPlayEnd(){
+				   this.item.seek=0
+				  console.log('onPlayEnd')
+					if(this.video_content){
+						 this.item.seek=0
+						 this.$emit('playend',this.item);
+					}
+			  },
+			subShowHandle(e){
+							 e.stopPropagation();
+							 this.$emit('subshow')
+					 },
+			 toplayerHandle(e){
+							 e.stopPropagation();
+							 this.$emit('toplayer')
+					 },
+			 invitaClkHandle(e){
+						  e.stopPropagation()
+						  this.$emit('invita')
+					 },
+			  collectHandle(e){
+				 e.stopPropagation()
+				    this.item.is_collected=  this.item.is_collected==1?0:1;
+					 this.dispatchEvent('item_info_event',this.item);
+				 	this.api().setCollects(this.item.id,  this.item.is_collected,res=>{
+						if(this.item.is_collected) this.$emit('toast',this.e18n('add_sucess_tip'));
+					},err=>{});
+			  },
+			  pstusChangeHandle(){
+				  // console.log('pstusChangeHandle 1',this.pstus,this.item);
+				  if(this.video_content){
+					  // console.log('pstusChangeHandle 2',this.pstus,this.item);
+					   if(!!this.item && this.item.pstus==1)   {
+							 this.video_content.play();
+					   }else{
+						    this.video_content.pause();
+					   }
+				  }
+			  },
+			  
+			  itemChangeHandle(){
+				  if(this.video_content){
+				  	  this.video_content.pause();
+				  }
+				  this.pstusChangeHandle();
+			  },
+			  onSubTapHandle(sub){
+				  this.current_sub_tab=sub;
+			  },
+			  onPlayBradtHandle(item){
+				  console.log('onPlayBradtHandle',(item?item.title:'null'))
+				  this.cur_play_item=item;
+				  this.progreeModuleHandle(0); 
+				  if(!item ||item!=this.item){
+					  if(this.item) this.item.pstus=0;
+					  if(this.video_content) this.video_content.pause();
+				  }else{
+					  this.pstusChangeHandle();
+				  }
+			  },
+			  video_init_handle(){
+				  this.progreeModuleHandle(0);
+				  clearInterval(this.timeUpdateInterval);
+				  clearTimeout(this.touch_timeout_handle);
+				  // #ifdef APP
+				  clearTimeout(this.video_loaded_handle);
+				  this.video_loaded_handle=setTimeout(()=>{
+				  	this.onVideoLoaded({detail:{duration:59}})
+				  },600);
+				  // #endif
+				  this.loading=true;
+				  if(this.video_content){
+				  	this.video_content.pause();
+				  }
+				  this.isplayend=false;
+				  this.muted_copy=true;
+			  }
+		},
+		created() {
+			this.addEventListener('play_video_event',this.onPlayBradtHandle);
+			this.video_init_handle();
+			
+			this.$watch('item',(v1,v2)=>{
+				console.log('created watchitem',(v1?v1.title:'null1'),(v2?v2.title:'null2'),)
+				this.video_init_handle();
+			})
+		}
+    }
+</script>
+
+<style lang="less" scoped>
+    @import url("./../../assets/styles/style.less");
+    .player-root{
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		.v-container{
+			.video{
+				z-index: 0;
+			}
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			z-index: 0;
+			.play-btn{
+				position: absolute;
+				z-index: 1;
+			}
+			.loading{
+				position: absolute;
+				z-index: 2; 
+			}
+		}
+		.cover{
+			position: absolute;
+			top:0;
+			left: 0;
+			right:0;
+			bottom: 0;
+			z-index: 1;
+		//	background-color: rgba(0, 0, 0, .85);
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			.menus{
+				position: absolute;
+				right:0;
+				bottom: 200rpx;
+				display: flex;
+				flex-direction: column;
+				justify-content: flex-end;
+				align-items: flex-end;
+				.grp{
+					margin-top: 65rpx;
+					display: flex;
+					flex-direction: column;
+					justify-content: flex-end;
+					align-items: stretch;
+					width: 160rpx;
+					.iconfont{
+						font-size: 50rpx;
+						color: @white;
+						text-align: center;
+					}
+					.txt{
+						margin-top: 15rpx;
+						font-size:28rpx;
+						color: @white;
+						text-align: center;
+					}
+					.active{
+						color: @orange;
+					}
+					.kstoast{
+						background-color: rgba(0, 0, 0, .30);
+						border-radius: 15rpx;
+						padding: 25rpx;
+						display: flex;
+						flex-direction: column;
+						justify-content: center;
+						align-items: center;
+						position: relative;
+									.text{
+										 display: flex;
+										 flex: 1;
+										 align-self: center;
+										 text-align: center;
+										 color: @white;
+										 font-size: 24rpx;
+										 font-weight: 600;
+									}
+					}
+				}
+			}
+			
+			.bottom{
+					position: absolute;
+					left: 0;
+					right:0;
+					bottom: 0rpx;
+					display: flex;
+					flex-direction: column;
+					justify-content: flex-end;
+					align-items: stretch;
+					
+					.title{
+						font-size: 32rpx;
+						color: @white;
+						padding: 15rpx;
+					}
+					.list-info{
+						background-color: rgba(0, 0, 0, .35);
+						
+						padding: 15rpx;
+						.txt{
+							font-size: 32rpx;
+							color: @white;
+						}
+					}
+					.progress{
+						display: flex;
+						flex-direction: column;
+						justify-content: flex-end;
+						align-items: stretch;
+						.tip{
+							text-align: center;
+							font-size: 32rpx;
+							font-weight: 800;
+							color: @white;
+						}
+						.bar{
+							height: 5rpx;
+							background-color: rgba(255, 255, 255, .35);
+							position: relative;
+							.time{
+								position: absolute;
+								top: 0rpx;
+								bottom: 0rpx;
+								background-color: @white;
+							}
+						}
+						.p-active{
+							height: 15rpx;
+						}
+					}
+					
+			}
+		}
+	}
+	
+	
+</style>

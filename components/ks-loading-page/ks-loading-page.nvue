@@ -1,0 +1,41 @@
+<template>
+  <div class="loading-wrapper" :style="vstyle">
+    <image class="aimg" :src="require('../../assets/images/loading1.gif')" mode="scaleToFill"></image>
+    <text class="title text" v-if="txt">{{txt}}</text>
+  </div>
+</template>
+
+<script>
+	export default {
+		  methods:{...getApp().globalData.util,},
+		  props: {vstyle:String,txt:String},
+}
+</script>
+
+<style lang="less" scoped>
+@import './../../assets/styles/style.less';
+.loading-wrapper {
+  position: fixed;
+   
+  left:0;
+  right:0;
+  top:0;
+  bottom:0;
+  display: flex;
+  min-height: 600rpx;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: @black1;
+  .aimg {
+   margin-bottom: 20rpx;
+   width: 150rpx;
+   height: 100rpx;
+  }
+  .text{
+    font-size: 28rpx;
+    font-weight: 800;
+    color: @black3;
+  }
+}
+</style>

@@ -1,0 +1,134 @@
+<template>
+  <div style="display: flex;position: fixed;z-index: 9999;">
+	  <div class="wrapper" v-if="showable">
+	    <div class="s-mask" @click="maskClkHandle"></div>
+	    <div class="s-body">
+	          <ks-rich-text  :strs="strs" :vstyle="'flex-direction: column; justify-content: flex-start; align-items: center; flex: 1;'" @agr_clk='argeementClkHandle' @pol_clk='privacyClkHandle' ></ks-rich-text>
+	          <div class="s-line"></div>
+	          <div class="s-btns">
+	            <text  @click="cancelHandle" class="cancel">{{e18n('policy_attion_cancel')}}</text>
+	            <text  @click="surelHandle">{{e18n('policy_attion_sure')}}</text>
+	          </div>
+	    </div>
+	  </div>
+  </div>
+</template>
+
+<script>
+
+export default {
+   computed:{
+     strs(){
+        let strspos=  this.hlighTxt({txt:'policy_attion',cls:'t-g-1'},{agreement:{txt:"《"+this.e18n('agreement')+"》",cls:'t-y-2 nobreak pdw1',emit:'agr_clk'},policy:{txt:"《"+this.e18n('privacy_policy')+"》",cls:'t-y-2 nobreak pdw1',emit:'pol_clk'} } )
+         return strspos;
+      }
+   },
+  props: [],
+  data(){
+	return {
+		showable:false,
+	}  
+  },
+  methods:{
+	   ...getApp().globalData.util,
+	  cancelHandle(){
+	      this.showable=false;
+		  this.app_exit();
+	  },
+	  surelHandle(){
+	      this.showable=false;
+		  uni.showTabBar()
+		  this.util_stroage_breaksave({'kiseng_argree_stus':true});
+	  },
+	  argeementClkHandle(){
+	      this.util_router_push('pages/webtext',{type:'agreement'})
+	  },
+	  privacyClkHandle(){
+	      this.util_router_push('pages/webtext',{type:'privacy'})
+	  },
+	  maskClkHandle(e){
+	   //  this.showable=true;
+	  },
+  },
+  created() {
+	  this.getInitDataCb(res=>{
+		  this.showable= !this.util_stroage_breakget('kiseng_argree_stus',false)
+		  if(this.showable){
+		  	uni.hideTabBar()
+		  }
+	  })
+  }
+}
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+.wrapper {
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  display: flex;
+  top:0rpx;
+  bottom: 0rpx;
+  left: 0rpx;
+  right:0rpx;
+  .s-mask{
+    top:0rpx;
+    bottom: 0rpx;
+    left: 0rpx;
+    right:0rpx;
+	position: absolute;
+	z-index: 1000;
+    background-color:rgba(0,0,0,.35) ;
+  }
+
+
+  .s-body{
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: stretch;
+    padding: 25rpx;
+    width: 650rpx;
+	z-index: 1001;
+    background-color: @white;
+    border-radius: 25rpx;
+	display: flex;
+
+    .s-content{
+      padding: 20rpx;
+      font-size: 32rpx;
+      color: @grey;
+	  display: flex;
+      a{
+        color: @them;
+        font-style:  normal;
+      }
+    }
+    .s-line{
+      height: 2rpx;
+      flex:1;
+      background-color: @them;
+      margin-top: 15rpx;
+      margin-bottom: 15rpx;
+	  display: flex;
+    }
+
+    .s-btns{
+      flex-direction: row;
+      justify-content: space-around;
+      padding-top: 25rpx;
+      padding-bottom: 25rpx;
+	  display: flex;
+      .cancel{
+        color: @grey;
+      }
+      text {
+          font-size: 32rpx;
+          color: @them;
+          text-align: center;
+      }
+    }
+  }
+}
+
+</style>

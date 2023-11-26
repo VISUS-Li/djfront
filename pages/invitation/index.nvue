@@ -1,0 +1,317 @@
+ 
+<template>
+  <div class="flx-column  bg-white">
+    <block v-if="!init">
+      <ks-loading-page :vstyle="'background-color:#000000;'"></ks-loading-page>
+    </block>
+    <block v-else>
+		<!-- #ifdef H5 -->
+			<ks-h5-navi-title :title="e18n('mine.invite_reward')"></ks-h5-navi-title>
+		<!-- #endif -->
+          <div class="share" v-if="show" @click="(show=false)">
+			  <text class="text">{{e18n('mine.invite_share_desc')}}</text>
+			  <image :src="require('../../assets/images/share_arrows@2x.png')" style="position: absolute;right:0;top:0;width:350rpx;height:400rpx;"></image>
+		  </div>
+          <div :class="'flx-column invitation-bg'">
+			   <image :src="require(isZh?'../../assets/images/invite_bg.png':'../../assets/images/invite_bg_en.png')" style="width:750rpx;" mode="aspectFit"></image>
+            <div class="invitation-top flx-column ">
+				 <image :src="require('../../assets/images/invite1_bg.png')" class="bg-img"></image>
+                <text class="top-title">{{e18n('mine.invite_tip',{coin:coinName()})}}</text>
+                <text class="top-xian"></text>
+                <text class="top-text">{{e18n('mine.not_capped',{coin:coinName()})}}</text>
+                <text class="top-copy">{{e18n('mine.activity_rules_tip')}}</text>
+				<!-- #ifdef MP-WEIXIN -->
+					<button class="top-button" open-type="share">{{e18n('mine.invite_now')}}</button>
+				<!-- #endif -->
+				<!-- #ifndef MP-WEIXIN -->
+				 <text class="top-button" @click="invitaClkHandle">{{e18n('mine.invite_now')}}</text>
+				<!-- #endif -->
+            </div>
+           <div class="reward-bg flx-column ">
+				 <image :src="require('../../assets/images/invitation_reward_bg.png')" class="bg-img"></image>
+                <text class="reward">{{e18n('mine.invite_reward')}}</text>
+                <div class="reward-list-container">
+                    <div class="reward-list-div" v-for="($item,$idx) in ruleList.rule">
+                            <div class="reward-list-bg">
+								<image :src="require('../../assets/images/Invitation_reward_day.png')" class="bg-img"></image>
+                                <text class="reading">{{$item.coin}}{{coinName()}}</text>
+                                <text class="reading-title"  v-if="$idx == 0">{{e18n('mine.first_day')}}</text>
+                                <text class="reading-title" v-if="$idx == 1">{{e18n('mine.second_day')}}</text>
+                                <text class="reading-title" v-if="$idx == 2">{{e18n('mine.third_day')}}</text>
+                            </div>
+                            <text class="reading-text">{{e18n('mine.friend_reading')}}{{$item.read_time}}{{e18n('minute')}}</text>
+                     </div>
+                </div>
+            </div>
+            <div class="process flx-column ">
+				  <image :src="require('../../assets/images/invitation_process.png')" class="bg-img"></image>
+                <text class="reward">{{e18n('mine.invite_process')}}</text>
+                <div class="process-list">
+                    <text class="process-text">{{e18n('mine.invite_process_1')}}</text>
+                    <text class="process-text">{{e18n('mine.invite_process_2')}}</text>
+                    <text class="process-text">{{e18n('mine.invite_process_3',{coin:coinName()})}}</text>
+                </div>
+            </div>
+        </div>
+        <text class="details" @click="rulesClkHandle">{{e18n('mine.activity_rules')}}</text>
+    </block>
+	<ks-message-center :pagename="pagename"></ks-message-center>
+  </div>
+</template>
+
+<script>
+	export default {
+		data(){
+			return {
+				  init:false,
+				  ruleList:null,
+				  uid:'',
+				  show:false,
+				  pagename:'invitation',
+			  }
+		},
+		computed:{
+			isZh(){
+				return this.getLanguage()=='zh-CN';
+			}
+		},
+		methods:{
+			...getApp().globalData.util,
+			invitaClkHandle(){
+				let txt=this.getShareUrl();
+				this.setClipBoard(txt,()=>{
+					this.util_dialog({message:this.e18n('mine.invite_now_copyed'),pagename:this.pagename});
+					uni.hideToast();
+				})
+			},
+			rulesClkHandle(){
+			    this.util_router_push('pages/webtext',{type:'invitation'})
+			},
+			onShareAppMessage() {
+				return {
+				  title: this.getSiteName(),
+				  path: '/pages/video_recomend/index?share_uid='+this.getUid(),
+				}
+			    // const promise = new Promise(resolve => {
+			    //   setTimeout(() => {
+			    //     resolve({
+			    //       title: '自定2'
+			    //     })
+			    //   }, 2000)
+			    // })
+			    // return {
+			    //   title: this.getSiteName(),
+			    //   path: '/page/user?id=123',
+			    //   promise 
+			    // }
+			  }
+		},
+	 onLoad(params) {
+		  this.getInitDataCb(()=>{
+			   uni.setNavigationBarTitle({title:this.e18n('mine.invite_reward')})
+			  this.uid=this.getUid();
+			  this.api().getInviteRules(this.uid,res => {
+								this.ruleList = res;
+								this.init=true;
+							})
+		  })
+	  },
+	  onShow() {
+		this.show=false;
+	  },
+	  onHide() {
+	  }
+ 
+}
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+    .share{
+        position: fixed;
+        left: 0rpx;
+        right: 0rpx;
+        top:0rpx;
+        bottom:0rpx;
+		background-color: rgba(0, 0, 0, .35);
+        /* padding-top: 450rpx; */
+        z-index: 999;
+		display: flex;
+		flex-direction: row;
+		align-content: center;
+        .text{
+			width: 650rpx;
+            font-size: 40rpx;
+            font-size: 40rpx;
+            color: #ffffff;
+            text-align: center;
+            height: 200rpx;
+            padding: 40rpx;
+            margin-top: 360rpx;
+        }
+        
+    }
+      .invitation-bg {
+        padding: 40rpx 20rpx;
+        background-color: #fd5279;
+        padding-bottom: 120rpx;
+    }
+
+	
+.details {
+        position: fixed;
+        top:160rpx;
+        right:0rpx;
+        font-size: 28rpx;
+        color: #fff;
+        background-color: rgba(0, 0, 0, .2);
+        border-top-left-radius: 40rpx;
+        border-bottom-left-radius: 40rpx;
+        padding: 20rpx 25rpx;
+		display: flex;
+		flex-direction: row;
+    }
+	
+    .process {
+        position: relative;
+        padding: 20rpx;
+        margin-top: 40rpx;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+		display: flex;
+        .process-list {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-top: 260rpx;
+                margin-bottom: 20rpx;
+				flex-direction: row;
+                .process-text {
+                        color: #333333;
+                        font-size: 28rpx;
+                        font-weight: 800;
+                        text-align: center;
+                        padding: 0 15rpx;
+						word-wrap: break-word;
+						width: 220rpx;;
+                    }
+            }
+    }
+    .reward {
+        color: #fff;
+        font-size: 36rpx;
+    }
+    .reward-bg {
+        padding: 10rpx;
+        margin: 40rpx 0 0 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+		position: relative;
+        .reward-list-container{
+            padding: 40rpx 0rpx;
+            justify-content: space-between;
+            align-items: flex-start;
+			display: flex;
+			flex-direction: row;
+                     .reward-list-div {
+                        flex:1;
+                        display: flex;
+                        align-items: center;
+                        flex-direction: column;
+                        justify-content: center;
+					
+                        .reward-list-bg {
+                            flex-direction: column;
+                            justify-content: flex-start;
+                            align-items: center;
+							width: 150rpx;
+                            height: 150rpx;
+                            position: relative;
+							display: flex;
+                             .reading-title {
+                                    font-size: 24rpx;
+                                    color: #FF4364;
+                                    position: absolute;
+                                    bottom: 25rpx;
+                                }
+                                .reading {
+                                    position: absolute;
+                                    color: #FF4364;
+                                    font-size: 20rpx;
+                                    top: 18rpx;
+                                    text-align: center;
+                                }
+                        }
+                    }
+                    
+        }
+		.reading-text {
+			font-size: 26rpx;
+			color: #F5325E;
+			margin-top: 20rpx;
+			margin-bottom: 20rpx;
+			align-content: center;
+			align-items: center;
+			text-align: center;
+			width: 220rpx;
+			word-wrap: break-word;
+		}
+
+    }
+
+    .invitation-top {
+        position: relative;
+		justify-content: center;
+		align-items: center;
+        padding: 65rpx 40rpx 40rpx;
+		.top-button {
+			background-color: #ff3366;
+			border-radius: 60rpx;
+		    line-height: 100rpx;
+		    text-align: center;
+			justify-content: center;
+			align-items: center;
+		    color: #fff;
+		    font-size: 34rpx;
+			min-width: 500rpx;
+			display: flex;
+		}
+		
+		.top-copy {
+		    border-top: 1rpx solid rgba(255, 207, 193, .4);
+		    color: #999;
+		    font-size: 20rpx;
+		    text-align: center;
+		    padding: 20rpx;
+		    margin-top: 40rpx;
+		}
+		
+		.top-xian {
+		    width: 382rpx;
+		    height: 1rpx;
+		    background-color: rgba(255, 207, 193, 1);
+		    opacity: 0.6;
+		    margin: 40rpx auto;
+		}
+		
+		.top-text {
+		    text-align: center;
+		    color: #F5325E;
+		    font-size: 71rpx;
+		    font-weight: bold;
+		    position: relative;
+		}
+		
+		.top-title {
+		    font-size: 66rpx;
+		    color: #F5325E;
+		    text-align: center;
+		    font-weight: bold;
+		}
+    }
+
+  
+</style>

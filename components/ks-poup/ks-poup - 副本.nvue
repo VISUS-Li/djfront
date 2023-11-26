@@ -1,0 +1,56 @@
+<template>
+  <div :style="rootstyle" >
+	  <uni-transition mode-class="fade" :duration="450" :show="show_stus" :style="'z-index:101;'">
+	  	 <div :style="'position: fixed;left:0;bottom:0;right:0;top:0;z-index:102;'+(mask?'background-color:rgba(0,0,0,.45)':'background-color:rgba(0,0,0,.45)')" @click="show_off_handle"></div>
+	   </uni-transition>
+	   <!-- #ifdef APP -->
+	   <uni-transition :mode-class="'slide-'+direction" :duration="450" :show="show_stus" :style="rootstyle+'z-index:103;'">
+	   <!-- #endif -->
+	  <!-- #ifndef APP -->
+	   <uni-transition :mode-class="'slide-'+direction" :duration="450" :show="show_stus" :style="'z-index:103;'">
+	  <!-- #endif -->
+	   <slot>  </slot>
+	  </uni-transition>
+  </div>
+</template>
+
+<script>
+
+
+export default {
+  props: {
+     mask:false,
+     direction:"",
+     show_stus:false,
+  },
+  computed:{
+	  rootstyle(){
+		  let  style="position:fixed;";
+		  switch(this.direction){
+			  case "top":
+			  style+="left:0;right:0;top:0;"
+			  break;
+			  case "left":
+				style+="left:0;top:0;bottom:0;"
+			  break;
+			  case "right":
+				style+="right:0;top:0;bottom:0;"
+			  break;
+			  case "bottom":
+				style+="bottom:0;left:0;right:0;"
+			  break;
+		  }
+		  return style;
+	  }
+  },
+  methods:{
+	  show_off_handle(){
+		  this.$emit('close');
+	  }
+  }
+}
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+</style>

@@ -1,0 +1,278 @@
+<template>
+  <div class="flx-column  bg-white">
+    <block v-if="!init"><ks-loading-page></ks-loading-page></block>
+    <block v-else>
+		<!-- #ifdef H5 -->
+			<ks-h5-navi-title :title="e18n('login.login')"></ks-h5-navi-title>
+		<!-- #endif -->
+          <div class="flx-column pd5 " v-if="step==1">
+              <text class="s-login">{{e18n('login.login')}}</text>
+              <input class="s-input" :placeholder="login_place" ref='_input' @input="inputChangeHandle" focus></input>
+              <div class="s-policy">
+				  <div class="check"  @click="chechPolicyHandle"> 
+						<image :src="require('../../assets/images/icon26.png')" v-if="policy_checked" class="active"></image>
+				  </div>
+				<ks-rich-text :vstyle="'flex-direction: row; justify-content: flex-start; align-items: flex-start; flex: 1;'"  :strs="strs"  @agr_clk='argeementClkHandle' @pol_clk='privacyClkHandle' ></ks-rich-text>
+			  </div>
+              <div :class="['s-getcode',(input_check_able && policy_checked)?'active':'']"  @click="getCodeHandle"><text class="text">{{e18n('login.get_vercode')}}</text></div>
+          </div>
+		  
+          <div class="flx-column pd5" v-if="step==2">
+              <text class="s-enter-vcode">{{e18n('enter_u_vericode')}}</text>
+              <text class="s-enter-tip">{{e18n('send_u_vericode')}}</text>
+              <input class="s-enter-input" :placeholder="enter_place" ref='_enter_input' @input="enterInputChangeHandle" type="number" value="" focus></input>
+              <div :class="['s-getcode' ,enterinput_check_able?'active':'']"  @click="submitHandle"><text  class="text">{{e18n('sure')}}</text></div>
+          </div>
+    </block>
+	   <ks-message-center :pagename="pagename"></ks-message-center>
+  </div>
+</template>
+<script>
+export default {
+ 
+
+  data(){
+		return {
+			step:1,
+			policy_checked:false,
+			init:false,
+			input:'',
+			enter_input:'',
+			path:'',
+			params:'',
+			pagename:'usr_login',
+		}
+  },
+  methods:{
+	   ...getApp().globalData.util,
+	   argeementClkHandle(){
+	       this.util_router_push('pages/webtext',{type:'agreement'})
+	   },
+	   privacyClkHandle(){
+	       this.util_router_push('pages/webtext',{type:'privacy'})
+	   },
+	   submitHandle(){
+	     this.api().quickLogin({phone:this.input,code:this.enter_input,source:this.getSenceType()},res=>{
+	          console.log('submitHandle1',res);
+			 this.setLoginData(res);
+	         if(this.path){
+	           this.util_router_replace(this.path,this.params);
+			   console.log('submitHandle2',this.params);
+	         }else{
+				console.log('submitHandle3',this.params);
+	           this.util_router_back();
+	         }
+	     },err=>{
+	       this.util_toast(err,0,this.pagename);
+	       this.enter_input='';
+			 setTimeout(()=>{
+			 				   // #ifdef APP
+			 				      this.$refs._enter_input.focus();
+			 				   // #endif
+			 				   // #ifdef H5
+			 				      // this.$refs._enter_input.focus=true;
+			 				   // #endif
+			 },500)
+	     })
+	   },
+	   enterInputChangeHandle(e){
+	       this.enter_input=e.detail.value;
+	   },
+	   inputChangeHandle(e){
+	       this.input=e.detail.value;
+	   },
+	   chechPolicyHandle(){
+	     this.policy_checked=!this.policy_checked;
+	   },
+	   getCodeHandle(){
+	     if(this.input_check_able && this.policy_checked ){
+	       //// ['register', 'quick_login', 'reset_pwd', 'change_phone', 'bind_phone'];//:注册验证码登录:找回密码:更换绑定手机号:绑定手机号(仅限第三方登录后使用)
+	         this.api().sendSms(this.input,'quick_login',res=>{
+	           this.step=2;
+			   this.enter_input='';
+			   setTimeout(()=>{
+				  // #ifdef APP
+				     this.$refs._enter_input.focus();
+				  // #endif
+				  // #ifdef H5
+				     // this.$refs._enter_input.focus=true;
+				  // #endif
+			   },500)
+	         },err=>{
+				  console.log('getCodeHandle3',err);
+			 })
+	     }
+	   },
+  },
+  
+  computed:{
+	  strs(){
+	     let strspos=  this.hlighTxt({txt:'login.attion2',cls:'t-g-1'},{agreement:{txt:"《"+this.e18n('agreement')+"》",cls:'t-t-2 pdw1',emit:'agr_clk'},policy:{txt:"《"+this.e18n('privacy_policy')+"》",cls:'t-t-2 pdw1',emit:'pol_clk'} } )
+	      return strspos;
+	   },
+    login_place(){
+       let ismail= this.getSmsType()=='email';
+       return ismail?this.e18n('login.plholder_email'):this.e18n('login.plholder_phone_num')
+    },
+    enter_place(){
+      return this.e18n('enter_u_vericode');
+    },
+    input_check_able(){
+      let type= this.getSmsType();
+      let ret=false;
+      switch(type){
+          case "sms":
+              ret=this.checkPhone(this.input);
+            break;
+          case 'email':
+               ret=this.checkMail(this.input);
+              break;
+      }
+	  console.log('input_check_able',ret)
+      return ret;
+    },
+    enterinput_check_able(){
+		let ret = this.enter_input.length>=6
+		console.log('enterinput_check_able',ret)
+      return ret;
+    },
+  },
+
+  onShow() {
+    this.getInitDataCb(res=>{
+        this.init=true;
+		setTimeout(()=>{
+						   // #ifdef APP
+						      this.$refs._input.focus();
+						   // #endif
+						   // #ifdef H5
+						      // this.$refs._input.focus=true;
+						   // #endif
+		},500)
+      })
+  },
+  onHide() {
+  },
+  onLoad(params) {
+     this.path=params.path;
+     this.params=params.params;
+	 this.getInitDataCb(res=>{
+		    uni.setNavigationBarTitle({title:this.e18n('login.login')})
+	   });
+	 }
+}
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+	page{
+		background-color: @white;
+	}
+.s-enter-vcode{
+  font-size: 48rpx;
+  font-weight: 800;
+  color: @black2;
+  margin-bottom: 10rpx;
+  display: flex;
+  flex-direction: row;
+}
+.s-enter-tip{
+  font-size: 24rpx;
+  color: @grey;
+   margin-bottom: 140rpx;
+}
+.s-enter-input{
+  line-height: 80rpx;
+  height: 80rpx;
+  font-size: 52rpx;
+  padding-bottom: 20rpx;
+  border-bottom-color: @grey;
+  border-bottom-width: 1rpx;
+ display: flex;
+ flex-direction: row;
+  margin-bottom: 20rpx;
+  color: @black2;
+}
+
+.s-login{
+  font-size: 48rpx;
+  font-weight: 800;
+  color: @black2;
+  margin-bottom: 140rpx;
+  display: flex;
+  flex-direction: row;
+}
+.s-input{
+  line-height: 80rpx;
+  height: 80rpx;
+  font-size: 52rpx;
+  padding-bottom: 20rpx;
+  border-bottom-color: @grey;
+  border-bottom-width: 1rpx;
+  margin-bottom: 20rpx;
+  color: @black2;
+  display: flex;
+  flex-direction: row;
+}
+.s-policy{
+  margin-bottom: 40rpx;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: row;
+  .text{
+    font-size: 24rpx;
+    color: @grey;
+  }
+  .a{
+    color: @them;
+    font-style:  normal;
+  }
+  .check{
+      width: 35rpx;
+      height: 35rpx;
+      margin-right: 10rpx;
+      border-radius: 50%;
+      background-color: @grey;
+	  display: flex;
+       .active{
+            border-color: @them;
+            background-color: @them;
+			flex:1;
+			border-radius: 50%;
+		    height: auto;
+		    width: auto;
+			
+          }
+  }
+}
+.s-getcode{
+  justify-content: center;
+  align-items: center;
+  background-color: @grey;
+  flex-direction: row;
+  height: 90rpx;
+  border-top-left-radius: 45rpx;
+  border-top-right-radius: 45rpx;
+  border-bottom-left-radius: 45rpx;
+  border-bottom-right-radius: 45rpx;
+  display: flex;
+  .text{
+    padding: 20rpx 100rpx;
+    color:@white2;
+    font-size: 36rpx;
+  }
+}
+.active{
+	background-color: @them;
+	display: flex;
+	flex-direction: row;
+	
+	.text{
+		padding: 20rpx 100rpx;
+		color:  @white;
+		font-size: 36rpx;
+	}
+}
+
+
+</style>

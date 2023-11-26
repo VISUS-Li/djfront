@@ -1,0 +1,109 @@
+<template>
+   <div  class="s-hsitem-div"  @click="click_handle" >
+		<div class="left">
+			<image :src="item.coverpic" class="s-hsitem-bkimage" alt="../../assets/images/book_cover_def.png"/>
+			<div v-if="item.thermal != 0" class="left-ancor"><text class="left-ancor-txt">{{item.thermal}}{{e18n('points')}}</text></div>
+		</div>
+		<div class="right">
+            <text class="title">{{item.title}}</text>
+            <text class="author">{{item.author}}</text>
+            <text class="iswz">{{(item.iswz == 1)?e18n('books.serial'):e18n('books.completed')}}</text>
+          </div>
+    </div>
+</template>
+
+
+<script>
+    export default {
+        props:{
+            item:Object,
+			cto:{
+				type:String,
+				default:'detail',
+			},
+        },
+		methods:{
+			...getApp().globalData.util,
+			tapclick(e){
+				this.$emit('tapclick',this.item)
+					console.log('tapclick hs item ',e,this.$emit)
+			},
+			click_handle() {
+			    switch(this.cto){
+			        case 'reading':
+			            console.log('reading')
+			            this.util_router_push('pages/book_reading',{anid:this.item.anid,chaps:this.item.read_chaps||1})
+			            break;
+			        case 'detail':
+			            this.util_router_push('pages/book_detail',{anid:this.item.anid,chaps:this.item.read_chaps||1})
+			            break;
+			        default :
+			            this.$emit('tapclick',this.item)
+			            break;
+			    }
+			},
+		},
+    }
+</script>
+
+<style lang="less">
+    @import url("./../../assets/styles/style.less");
+	.s-hsitem-div {
+	    display: flex;
+	    justify-content: flex-start;
+		align-items: stretch;
+	    position: relative;
+		flex-direction: row;
+		width:  340rpx;
+		.left{
+			 width: 170rpx;
+			 margin-right: 12rpx;
+			.s-hsitem-bkimage {
+			    width: 170rpx;
+			    height: 200rpx;
+			    border-radius: 15rpx;
+			}
+			.left-ancor{
+				
+				.left-ancor-txt{
+				        color: @white;
+				        font-size: 24rpx;
+				}
+			}
+		}
+		
+		.right{
+			width: 175rpx;
+			flex-direction: column;
+			justify-content: space-between;
+			align-items: stretch;
+			 display: flex;
+			.title{
+				.txt-lines(2);
+				font-size: 32rpx;
+				font-weight: 600;
+				color: @black2;
+				text-align: left;
+			}
+			
+			.author{
+			   .txt-lines(1);
+				font-size: 32rpx;
+				color: @grey;
+				text-align: left;
+			}
+			.iswz{
+				.txt-lines(1);
+				font-size: 32rpx;
+				color: @black2;
+				text-align: left;
+			}
+		}
+	}
+	
+	
+
+
+   
+	
+</style>

@@ -1,0 +1,118 @@
+<template>
+    <div class="book-container" @click="click_handle">
+        <image class="book-img" :src="item.picture" alt="../../assets/images/book_cover_def.png" mode="aspectFill"></image>
+        <div class="book-right">
+			<div class="right-top">
+				 <text class="book-title-left">{{item.title}}</text>
+				 <text class="book-title-right"> {{e18n('sel_idx',{idx:item.last_chap})}}</text>
+			</div>
+            <div class="author-list">
+               <div class="author-icon-left">
+                    <text class="author-subtitle">{{e18n('sel_total',{total:item.subs})}}</text>
+                </div> 
+                <div class="author-icon-left">
+                    <text class="author-subtitle">{{(item.cate_desc && item.cate_desc.join(' '))||"重生 逆袭"}}</text>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    export default {
+        props:{
+            item:Object,
+			last:false,
+           cto:{
+				type:String,
+				default:'detail',
+			},
+            mini_type:{
+                type:String,
+                default:'score'    // hots 人气  comments  likes  score
+            }
+        },  
+		methods:{
+			 ...getApp().globalData.util,
+			 click_handle() {
+			      this.util_router_push('pages/video_player',{course_id:this.item.id,chap:this.item.last_chap})
+			 },
+		},
+       
+    }
+</script>
+
+<style lang="less">
+    @import url("./../../assets/styles/style.less");
+    .book-container {
+        display: flex;
+        flex-direction: row ;
+        justify-content:space-between;
+        align-items: stretch;
+        margin-top: 0rpx;
+		flex:1;
+		.book-img {
+			flex:15;
+			height: auto;
+		    border-radius: 5%;
+		    margin-right: 10rpx;
+		}
+		.book-right{
+		    display: flex;
+		    flex-direction: column ;
+		    justify-content:space-between;
+		    align-items:stretch;
+			flex:80;
+			.right-top{
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				flex-direction: row;
+				.book-title-left {
+				    font-size: 30rpx;
+					font-weight: 600;
+				    color: @white3;
+				    .txt-lines(1);
+				    padding: 2rpx 0rpx;
+				}
+				.book-title-right {
+				    font-size: 26rpx;
+				    color: @white3;
+				    .txt-lines(1);
+				    padding: 2rpx 0rpx;
+				}
+			}
+			
+			
+			.author-list {
+			    display: flex;
+			    align-items: center;
+			    justify-content: space-between;
+				flex-direction: row;
+				.author-icon-left {
+				    display: flex;
+				    align-items: center;
+					flex-direction: row;
+				    font-size: 26rpx;
+				    color: @grey;
+					.author_icon {
+					    width: 30rpx;
+					    height: 35rpx;
+					    margin-right: 10rpx;
+					}
+					.author-subtitle {
+					    color: @grey;
+					    font-size: 26rpx;
+					    padding: 5rpx 0rpx;
+					    .txt-lines(1);
+					    border-radius: 4rpx;
+					}
+				}
+			}
+		}
+    }
+   
+   
+
+  
+</style>

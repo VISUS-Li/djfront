@@ -1,0 +1,164 @@
+<template>
+  <div class="flx-column">
+    <block v-if="!init"></block>
+    <block v-else>
+		<!-- #ifdef H5 -->
+			<ks-h5-navi-title :title="e18n('mine.customer_service')"></ks-h5-navi-title>
+		<!-- #endif -->
+        <div class="bg-black2 pdw5 flx-column s-top relative">
+			<image :src="require('../../assets/images/contact_service_tit.png')" class="bg-img" style="width: 40rpx;height: 40rpx;left:40rpx;top:25rpx;"></image>
+          <text class="title"> {{e18n('mine.contact_information')}}</text>
+          <text class="desc">{{e18n('mine.contact_attion')}}</text>
+          <div class="pdh2"></div>
+        </div>
+        <div class=" bg-black2 pdw5 flx-column s-mid">
+          <div class=" bg-white pd5 flx-column radius-15">
+            <div class="tab">
+              <div class="left"> <image class="image" :src="require('../../assets/images/contact_way1.png')" ></image> <text class="text">{{custom.mobile}}</text> </div>
+              <div class="right" @click="copyHandle(custom.mobile)"><text class="text">{{e18n('copy')}}</text> </div>
+            </div>
+            <div class="tab">
+              <div class="left"> <image class="image" :src="require('../../assets/images/contact_way2.png')" ></image> <text class="text">{{custom.weixin}}</text> </div>
+              <div class="right" @click="copyHandle(custom.weixin)"><text class="text">{{e18n('copy')}}</text> </div>
+            </div>
+            <div class="tab">
+              <div class="left"> <image class="image" :src="require('../../assets/images/contact_way3.png')" ></image> <text class="text">{{custom.qq}}</text> </div>
+              <div class="right" @click="copyHandle(custom.qq)"><text  class="text">{{e18n('copy')}}</text> </div>
+            </div>
+          </div>
+          <div class="pd3"></div>
+           <div class=" bg-grey pdw5 flx-column s-problem bg-white v-radius-box">
+          <ks-typography-title :title="e18n('mine.common_problem')" :vstyle="'color:#000000'"></ks-typography-title>
+           <div v-for="(item,$idx) in custom.common_problem" class="flx-column pd5 ">
+             <text class="title">{{($idx+1)}}、{{item.title}}</text>
+             <div class="ans"><text class="text">{{item.explain}}</text></div>
+           </div>
+           </div>
+           <div class="bottom"></div>
+        </div>
+    </block>
+	   <ks-message-center :pagename="pagename"></ks-message-center>
+  </div>
+</template>
+
+<script>
+export default {
+  data(){
+	  return {
+		  custom:null,
+		  init:false,
+		  pagename:'customer',
+	  }
+  },
+	onLoad(params) {
+	  this.getInitDataCb(()=>{
+		  uni.setNavigationBarTitle({title:this.e18n('mine.customer_service')})
+		  this.api().customService(res=>{
+		      this.custom=res;
+		      this.init=true;
+		  })
+	  })
+  },
+  onHide() {
+  },
+  onShow() {
+  },
+  methods:{
+	  ...getApp().globalData.util,
+	copyHandle(str){
+		  uni.setClipboardData({
+		  	data: str,
+		  	success: ()=>{
+				this.util_toast(this.e18n('copyed'));
+				}})
+		  }
+  }
+	
+  
+}
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+  .s-problem{
+	  display: flex;
+    .title{
+      color: @black2;
+      font-size: 36rpx;
+      font-weight: 800;
+      margin-bottom: 20rpx;
+    }
+    .ans{
+      padding: 40rpx 20rpx;
+      background-color: @white2;
+      border-radius: 15rpx;
+      .text{
+          font-size: 28rpx;
+          line-height: 50rpx;
+          color: @grey;
+      }
+    }
+  }
+  .s-mid{
+    .tab{
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 50rpx;
+	  display: flex;
+	  flex-direction: row;
+      .left{
+		  display: flex;
+		  flex-direction: row;
+        .image{
+          width: 40rpx;
+		  height: 40rpx;
+          margin-right: 20rpx;
+        }
+        .text{
+          color: @black2;
+          font-size: 32rpx;
+          font-weight: 800;
+        }
+      }
+
+      .right{
+        background-color: @them;
+
+		.radius-box(15rpx);
+        padding: 10rpx 25rpx;
+		display: flex;
+		flex-direction: row;
+        .text{
+            color: @white;
+			 font-size: 32rpx;
+        }
+      }
+    }
+  }
+
+  .s-top{
+    padding-top: 25rpx;
+    .title{
+      color: @white2;
+      font-size: 36rpx;
+      font-weight: 800;
+      align-items: center;
+      padding-left: 60rpx;
+      margin-bottom: 20rpx;
+    }
+    .desc{
+       color: @white3;
+       font-size: 32rpx;
+       line-height: 50rpx;
+    }
+    .s-pannel-hap{
+      margin-top: 45rpx;
+      background-color: @white;
+      border-top-left-radius: 25rpx;
+      border-top-right-radius: 25rpx;
+      height: 25rpx;
+		flex:1;
+      
+    }
+  }
+</style>

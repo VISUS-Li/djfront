@@ -1,0 +1,79 @@
+<template>
+    <div class="s-vsitem-root flx-column" @click="click_handle">
+        <div class="flx-column">
+            <image :src="item.coverpic" class="s-vsitem-bkimg" alt="../../assets/images/book_cover_def.png"/>
+           <!-- <div v-if="item.thermal != 0" class="left-ancor">
+                <text class="left-ancor-txt">{{item.thermal}}{{e18n('points')}}</text>
+            </div> -->
+        </div>
+		<div class="s-vsitem-bktitle"> 
+			<text class="s-vsitem-bktitle-txt">{{item.title}}</text>
+		</div>
+    </div>
+</template>
+
+<script>
+    export default {
+        props:{
+            cto:{
+				type:String,
+				default:'detail',
+			},
+            item:Object,
+            txtbgColor:{
+                type:String,
+                default:''
+            }
+        },
+		methods:{
+			   ...getApp().globalData.util,
+			   click_handle() {
+			       switch(this.cto){
+			           case 'reading':
+			               console.log('reading')
+			               this.util_router_push('pages/book_reading',{anid:this.item.anid,chaps:this.item.read_chaps||1})
+			               break;
+			           case 'detail':
+			               this.util_router_push('pages/book_detail',{anid:this.item.anid,chaps:this.item.read_chaps||1})
+			               break;
+			           default :
+			               this.$emit('tapclick',this.item)
+			               break;
+			       }
+			   },
+		},
+        
+    }
+</script>
+
+<style lang="less" scoped>
+    @import url("./../../assets/styles/style.less");
+    .s-vsitem-root{
+        position: relative;
+    }
+    .s-vsitem-bkimg {
+        width: 150rpx;
+        height: 180rpx;
+        border-radius: 15rpx;
+    }
+
+
+    .left-ancor-txt{
+            color: @white;
+            font-size: 24rpx;
+    }
+
+    .s-vsitem-bktitle {
+        margin-top: 10rpx;
+		.s-vsitem-bktitle-txt {
+		    font-size: 32rpx;
+			font-weight: 600;
+		    color: @black2;
+		   .txt-lines(1);
+		    width: 150rpx;
+		    padding: 4rpx 0rpx;
+			text-align: center;
+		}
+    }
+    
+</style>

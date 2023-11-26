@@ -1,0 +1,308 @@
+<template>
+<div class="cubroot"   @tap.stop="onVideoClick">
+	<div class="left">
+		<video class="video"
+		:id="video_id"
+		ref="video_ref"
+		@loadedmetadata="onVideoLoaded"
+		:src="videosrc"  @ended="playend_handle" :auto-play="false"
+		:muted="muted"
+		 :loop="false"
+		 object-fit="fill"
+		 :show-center-play-btn="false"
+		 :show-play-btn="false"
+		 :controls="false"
+		 :skip-hidden-item-layout="true"
+		 :enable-progress-gesture="false"
+		></video>
+		 <ks-loading-page v-if="!is_video_loaded" :vstyle="'position: absolute;left:0;right: 0;top: 0;bottom: 0;background-color: #000000;'"></ks-loading-page>
+		<!-- <div style="position: absolute;height: 1px;background-color: red;width: 200rpx;"></div> -->
+		<div class="cover"  @tap.stop="onVideoClick">
+			<text class="muted iconfont"  @tap.stop="changeMutedHandle">{{muted?'&#xe8b8;':'&#xe642;'}}</text>
+			<div class="continue" v-if="isplayend"  @tap.stop="nextHandle">
+				<text class=" iconfont">&#xe64d;</text><text class="txt">{{e18n('next_elip')}}</text>
+			</div>
+		</div>
+	</div>
+	<div class="right">
+		<image :src="require('@/assets/images/cub_bg.png')"  class="bg-img"></image>
+		<div class="container">
+			<text class="title"> {{item.title}}</text>
+				<text class="themal">{{ e18n('viewed_num',{num:formatBookHots(item.learn_sum)})}}</text>
+			<text class="tag">{{ (item.cate_desc && item.cate_desc.join(' '))||"重生 逆袭"}}</text>
+			<text class="desc">{{ filterHTMLTag(item.intor_html)}}</text>
+		</div>
+		
+		<text  @tap.stop="collectHandle" :class="['iconfont',item.is_collected?'collec-active':'collec']" >
+		&#xe8b9;  {{e18n(item.is_collected?"books.already_on_bookshelf":'books.add_to_bookshelf')}}
+		</text>
+	</div>
+</div>
+
+</template>
+<script>
+    export default {
+        props:{
+             item:Object,
+             white:Boolean,
+			 small:{
+			 	type:Boolean,
+			 	default:false,
+			 },
+             cto:{
+				type:String,
+				default:'reading',
+			},
+            mini_type:{
+                type:String,
+                default:'score'    // hots 人气  comments  likes  score
+            }
+        },
+		data(){
+			return {
+				isplayend:false,
+				muted:false,
+				video_content:null,
+				is_video_loaded:false,
+				current_play_item:null,
+				video_id:"id_"+Math.ceil((Math.random()*99999999999999)),
+			}
+		},
+		computed:{
+			videosrc(){
+				let src=this.item.file+'1.mp4'
+				console.log('vidoe src: ',src)
+				return src;
+			},
+		},
+		methods:{
+			  ...getApp().globalData.util,
+			  onVideoClick(e){
+				  // console.log('onVideoClick 1: ')
+				     e.stopPropagation()
+				   this.util_router_push('pages/video_player',{course_id:this.item.id,chap:this.item.last_chap})
+			  },
+			  onVideoLoaded(e){
+				  if(!this.video_content) this.video_content =uni.createVideoContext(this.video_id,this);
+				    console.log('onVideoLoaded 00: ',e)
+				  this.is_video_loaded=true;
+				  this.pstusChangeHandle();
+			  },
+			  playend_handle(){
+					if(!!this.video_content){
+						 this.video_content.pause()
+						 this.isplayend=true;
+					}
+			  },
+			  pstusChangeHandle(){
+				    if(!this.video_content) this.video_content = uni.createVideoContext(this.video_id,this);
+					if(!!this.item && (this.item == this.current_play_item) && this.is_video_loaded && !this.isplayend)   {
+							if(!!this.video_content)  {
+								this.video_content.play();
+							}else{
+								this.$refs.video_ref.play();
+							}
+					 }else{
+							if(!!this.video_content)  {
+								this.video_content.pause();
+							}else{
+								this.$refs.video_ref.pause();
+							}
+					 }
+			  },
+			  onPlayBradtHandle(item){
+				  this.current_play_item=item;
+				  this.pstusChangeHandle();
+			  },
+			  
+			  nextHandle(e){
+				    e.stopPropagation()
+				    this.util_router_push('pages/video_player',{course_id:this.item.id,chap:this.item.last_chap+1})
+			  },
+			  changeMutedHandle(e){
+				   e.stopPropagation()
+				   this.muted=!this.muted;
+				   this.pstusChangeHandle();
+			  },
+			  collectHandle(e){
+				  console.log('collectHandle 1: ')
+				  e.stopPropagation()
+				  if(!this.item.is_collected){
+					   console.log('collectHandle 2: ')
+					  this.item.is_collected=1
+					  this.dispatchEvent('item_info_event',this.item);
+					  this.api().setCollects(this.item.id,  this.item.is_collected,res=>{
+					  	if(this.item.is_collected) this.$emit('toast',this.e18n('add_sucess_tip'));
+					  },err=>{});
+				  }else{
+					   console.log('collectHandle 3: ')
+					  this.onVideoClick(e);
+				  }
+			  }
+		},
+		created() {
+			 // #ifdef APP
+				 setTimeout(()=>{
+					this.onVideoLoaded({detail:{duration:59}})
+				 },600)
+			 // #endif
+			 this.addEventListener('lib_video_event',this.onPlayBradtHandle);
+		}
+    }
+</script>
+
+<style lang="less">
+    @import url("./../../assets/styles/style.less");
+    .cubroot{
+		.radius-box(10rpx);
+		width: 710rpx;
+		height: 550rpx;
+		background-color: #777788;
+		display: flex;
+		flex-direction: row;
+		justify-content: flex-start;
+		align-items: flex-start;
+		.right{
+			position: relative;
+			width: 300rpx;
+			height: 550rpx;
+			.container{
+				position: relative;
+				// width: 250rpx;
+				// height: 500rpx;
+				display: flex;
+				flex-direction: column;
+				justify-content: flex-start;
+				align-items: flex-start;
+				padding: 25rpx;
+				.title{
+					.txt-lines(1);
+					font-size: 30rpx;
+					color: @white;
+					font-weight: 600;
+					margin-bottom: 15rpx;
+				}
+				.themal{
+					display: flex;
+					flex-direction: row;
+					justify-content: flex-start;
+					align-items: flex-end;
+					margin-bottom: 15rpx;
+					width: 250rpx;
+					.txt-lines(1);
+					font-size: 24rpx;
+					color: @orange;
+				}
+				.tag{
+					.txt-lines(1);
+					font-size: 24rpx;
+					color: @white;
+					margin-bottom: 15rpx;
+				}
+				.desc{
+					
+					font-size: 28rpx;
+					line-height: 45rpx;
+					color: @white3;
+					margin-bottom: 15rpx;
+					.txt-lines(6);
+				}
+			}
+			.collec{
+				position: absolute;
+				bottom: 20rpx;
+				left:20rpx;
+				z-index: 99;
+				width: 250rpx;
+				background-color: @orange;
+				.radius-box(10rpx);
+				padding: 10rpx 0rpx;
+				font-size: 28rpx;
+				color:  @white;
+				font-weight: 600;
+				text-align: center;
+			}
+			.collec-active{
+				position: absolute;
+				bottom: 20rpx;
+				left:20rpx;
+				z-index: 99;
+				width: 250rpx;
+				background-color: @black2;
+				.radius-box(10rpx);
+				padding: 10rpx 0rpx;
+				font-size: 30rpx;
+				color:  @grey;
+				font-weight: 600;
+				text-align: center;
+			}
+		}
+		
+		.left{
+			width: 410rpx;
+			height: 550rpx;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			position: relative;
+			.video{
+				width: 410rpx;
+				height: 550rpx;
+			}
+			.muted{
+				z-index: 5;
+				right: 20rpx;
+				bottom: 20rpx;
+				position: absolute;
+				font-size: 45rpx;
+				color: @white;
+			}
+			.cover{
+				z-index: 100;
+				left: 0;
+				right: 0;
+				top: 0;
+				bottom: 0;
+				position: absolute;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				.continue{
+					background-color: @orange;
+					.radius-box(50rpx);
+					padding: 15rpx 35rpx;
+					display: flex;
+					flex-direction: row;
+					align-items: center;
+					.txt{
+						font-size: 28rpx;
+						color: @white;
+						font-weight: 800;
+					}
+					.iconfont{
+						font-size: 50rpx;
+						color: @white;
+						font-weight: 500;
+					}
+				}
+				.pic{
+					z-index: 1;
+					left: 0;
+					right: 0;
+					top: 0;
+					bottom: 0;
+					position: absolute;
+					display: flex;
+					justify-content: center;
+					align-items: center;
+				}
+				.btn{
+					z-index: 2;
+					background-color: @grey;
+				}
+			}
+		}
+	}
+	
+</style>

@@ -1,0 +1,53 @@
+<template>
+    <div class="root">
+		<swiper class="swiper" :circular="true" :indicator-active-color	="white ? '#ff6600':'#ff6600'"  indicator-color="#666666" :indicator-dots='true' indicator-size="15rpx" :autoplay="true" interval="1500" :loop="true">
+			<swiper-item class="s-swiper-item" v-for="($item,$index) in guess">
+				<ks-tybook-hl-item :item="$item"  :cto="cto" :white="white"></ks-tybook-hl-item>
+			</swiper-item>
+		</swiper>
+    </div>
+</template>
+
+<script>
+	export default {
+		
+		
+        props: {
+            list: Array,
+            white:Boolean,
+            cto:String,
+        },
+        data(){
+			return {
+					 guess:[],
+				}
+		},
+		methods:{
+			...getApp().globalData.util,
+		},
+        created() {
+         this.api().changeGuess((res)=>{
+             this.guess=res;
+         	console.log('guess',this.guess)
+         })
+        },
+        
+    }
+</script>
+
+<style lang="less" scoped>
+    @import url("./../../assets/styles/style.less");
+	.root{
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		.swiper{
+			
+			height: 300rpx;
+			.s-swiper-item{
+				flex:1;
+			}
+		}
+	}
+	
+</style>

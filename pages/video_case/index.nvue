@@ -1,0 +1,235 @@
+<template>
+   <div class="flx-column">
+	    <block v-if="init==2">
+			<ks-miniprogram></ks-miniprogram>
+		</block>
+	   <block v-if="!init">
+		   <ks-loading-page></ks-loading-page>
+	   </block>
+	   <block v-if="init==1">
+		<div class="flx-column bg-black">
+			<div class="bg-black s-title">
+					<text class="title-bar">{{getSiteName()}}</text>
+			</div>
+			<div class="bg-black pdw2 flx-column" >
+				<div class="pdh2">
+					<ks-search-link></ks-search-link>
+				</div>
+				<ks-swiper :white="true" :cto="'detail'"></ks-swiper>
+				<div class="s-top bg-black2">
+					<!-- <text class="txt">{{ e18n('books.bookshelf')}}</text> -->
+				</div>
+			</div>
+			<div class="bg-black1 flx-column  pdw2" >
+				<div class="content">
+						<div class="flx-gird flx-between">
+								<div><text class="txt-btn iconfont"   @click="onTapHandle('read_records')">&#xe636; {{e18n('mine.reading_records')}}</text></div>
+								<div><text class="txt-btn iconfont"   @click="onTapHandle('organize')">&#xe646; {{isEditStus?e18n('organize_compelted'):e18n('organize')}}</text></div>
+								<div @click="onTapHandle('sigin')"  class="bookbean-icon-div" >
+									<image class="bean-cls" :src="require('../../assets/images/bookbean_icon.png')"></image>
+									<text class="txt-btn s-w-color">{{e18n("books.checkin_coin")}}</text>
+								</div>
+							</div>
+							<div class="pdh2"></div>
+							<ks-tylist-vm-list :list="list"   @tapclick="onBookTapclick" @del="ondelHandle" @add="onAddHandle" cto="click" ></ks-tylist-vm-list>
+							<div class="pdh2"></div>
+							 <ks-no-more :loading="false" :vstyle="'color:#545454'"></ks-no-more>
+							<div style="height:200rpx"></div>
+				</div>
+				
+			</div>
+		</div>
+	   </block>
+	    <ks-message-center :pagename="pagename"  :agree="true"></ks-message-center>
+	</div>
+</template>
+
+<script>
+	import EventBus from "@/helper/EventBus.js";
+	export default {
+	data(){
+		return {
+		init:0,
+		appinitdata:'',
+		isEditStus:false,
+		pagename:'book_case',
+		list:[],
+		}
+	},
+	methods:{
+		...getApp().globalData.util,
+		onBookTapclick(item){
+			console.log('asdfasdfasdfadsf',item);
+			if(this.isEditStus) return ;
+			if(item){
+				this.util_router_push('pages/book_reading',{anid:item.anid||item.id,chaps:item.read_chaps||1})
+			}
+		},
+		ondelHandle(item){
+			console.log('ondelHandle',item);
+			if(!this.isEditStus) return ;
+			if(!item) return 
+			this.util_dialog({
+				message:this.e18n('books.remove_warn'),
+				pagename:this.pagename,
+				buttons:[{text:this.e18n('sure')},{text:this.e18n('cancel')}],
+				success:(res)=>{
+						// if(!res.confirm)	return ;
+					this.api().setCollects(item.id,0,(res)=>{
+						
+													let temp = this.deep_copy(this.list)
+													let index=temp.findIndex((sitem)=>{
+														return sitem.id==item.id
+														});
+													if(index>=0) temp.splice(index,1);
+													this.list= temp;
+													item.is_collected=0;
+													this.dispatchEvent('item_info_event',item);
+													console.log('new list',index,this.list);
+												})
+				},
+				cancel:(res)=>{ console.log('cancel ',res)}
+			})
+		},
+		onAddHandle(e){
+				this.util_router_push('pages/video_lib')
+			},
+		onTapHandle(type){
+			console.log(type);
+			switch(type){
+				case 'read_records':
+					this.util_router_push('pages/record')
+				break;
+				case 'organize':
+					 this.organizeHandle(!this.isEditStus)
+				break;
+				case 'sigin':
+					this.util_router_push('pages/video_welfare')
+				break;
+			}
+		},
+		organizeHandle(v){
+			this.isEditStus=v;
+			this.list.forEach((item,index)=>{
+									this.$set(item,'showdel',this.isEditStus)
+			})
+			this.dispatchEvent(EventBus.EVE_BOOKSHELF,this.isEditStus)
+		},
+		updateList(){
+			this.api().getCollects(1,50,(data)=>{
+				let temp=[];
+				data = data.data ||data; 
+				data.forEach((item)=>{
+					item.showdel=false;
+					item.isadd=false;
+					item.in_case=true;
+					temp.push(item);
+				})
+				temp.push({isadd:true,showdel:false});
+				this.list=temp;
+			})
+		}
+	},
+	
+	onShow(){
+		console.log('bookcase on show' );
+		this.addEventListener(EventBus.EVE_LOGINED,this.updateList)
+		this.getInitDataCb((res)=>{
+			this.appinitdata = res ;
+			console.log('bookcase on show 2',res );
+			this.init = this.getInitStaus() ;
+			uni.setNavigationBarTitle({title:this.e18n('bookshelf') })
+			this.keeptabBarTxt();
+			this.updateList();
+			if( this.init=1){
+				setTimeout(()=>{this.firstHandle(this.pagename)},1500);
+			}
+		})
+	},
+	onHide() {
+		 this.organizeHandle(false);
+		this.removeEventListener(EventBus.EVE_LOGINED,this.updateList)
+		console.log('book case hide !!')
+	},
+}
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+	/* #ifndef APP-NVUE */
+	page{background-color: @white2}
+	/* #endif */
+</style>
+<style lang="less" scoped>
+	@import './../../assets/styles/style.less';
+	page{
+		background-color: @black1;
+	}
+	
+	.content{
+		background-color: @black2;
+		min-height:500rpx;
+		display: flex;
+		flex-direction: column;
+		padding-left: 10rpx;
+		padding-right: 10rpx;
+	}
+	.txt-btn{
+		font-size: 28rpx;
+		color: @them;
+	}
+	.bookbean-icon-div {
+	    display: flex;
+	    align-items: center;
+	    justify-content: center;
+		background-color: @them;
+		border-radius: 20rpx;
+		position: relative;
+	    height: 50rpx;
+	    width:  150rpx;
+	    color: #fff;
+	    font-size: 36rpx;
+		.bean-cls{
+			width: 35rpx;
+			height: 42rpx;
+			position: absolute;
+			left: 0rpx;
+			top:-10rpx;
+			margin-right: 10rpx;
+		}	
+	}
+
+	.s-w-color{
+		color: white;
+	}
+	.s-flexend{
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+	}
+	
+	.s-top{
+    	border-width: 0rpx;
+    	border-color: @white3;
+		border-top-left-radius: 25rpx;
+		border-top-right-radius: 25rpx;
+		height: 30rpx;
+		.txt{
+			font-size: 30rpx;
+			color: @white3;
+		}
+	}
+
+	.s-title{
+		position: sticky;
+		top:0;
+		z-index: 250;
+		padding: 25rpx;
+		.title-bar{
+			font-size: 34rpx;
+			color: @white3;
+			font-weight: 800;
+		}
+		
+	}
+</style>

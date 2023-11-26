@@ -1,0 +1,100 @@
+<template>
+	<div :class=" iswx?'wx-warp':'h5-warp'">
+		<div v-if="iswx"  @touchmove="onTmHandle" class="ch-warp">
+			<div  class="movecontainer"  :style="`left:${tx}px;top:${ty}px;`"  @touchstart.stop="onTsHandle" @touchend.stop="onTendHandle"><text class="text iconfont" @click="util_router_back">&#xe672; {{e18n('back')}}</text></div>
+		</div>
+		<ks-title-bar  v-if="!iswx" :title="title" :right="e18n('home')" :vstyle="title_style" @left_click="util_router_back"    @right_click="goHome"></ks-title-bar>
+	</div>
+</template>
+
+<script>
+	export default {
+		methods:{
+			...getApp().globalData.util,
+			 onTmHandle(e){
+				 if(e && this.inmove){
+					 let tx=e.touches[0].clientX - 32;
+					 tx=Math.max(tx,this.t_min_x);
+					 tx=Math.min(tx,this.t_max_x);
+					 this.tx=tx;
+					 this.ty=e.touches[0].clientY -32;
+					 e.stopPropagation();
+				 }
+			 },  
+			  onTsHandle(e){
+				  this.inmove=true;
+			  },   
+			  onTendHandle(e){
+				  this.inmove=false;
+			  },   
+			},
+		props:{ title:String},
+		data(){
+			return {
+				iswx:this.isInWx(),
+				tx:0,
+				ty:0,
+				t_min_x:0,
+				t_max_x:0,
+				inmove:false,
+				title_style:'font-size:32rpx;color:#a1a1a1;background-color:#1a1a1a;',
+				move_container_style:'width: 150rpx;height: 150rpx;border-radius: 100rpx;background-color: rgba(119,119,119,.35);display: flex;justify-content: center;align-items: center;',
+				move_txt_style:'display: flex;font-size: 32rpx;color: #ffffff;text-align: center; font-family: "iconfont"',
+				
+				// title_style:'font-size:32rpx;color:#222222;background-color:#f2f2f2',
+				// move_container_style:'width: 150rpx;height: 150rpx;border-radius: 100rpx;background-color: rgba(119,119,119,.35);display: flex;justify-content: center;align-items: center;',
+				// move_txt_style:'display: flex;font-size: 32rpx;color: #ffffff;text-align: center; font-family: "iconfont"',
+			}
+		},
+		created() {
+			this.getWindowInfo(res=>{
+				this.ty=res.windowHeight*.75;
+				this.tx=res.windowWidth*.7;
+				this.t_min_x=0;
+				this.t_max_x=res.windowWidth*.9;
+			})
+		}
+		
+	}
+</script>
+
+<style lang="less">
+   @import url("./../../assets/styles/style.less");
+.wx-warp{
+	position: fixed;
+	flex-direction: row;
+	display: flex;
+	z-index: 300;
+	.movecontainer{
+		width: 150rpx;
+		height: 150rpx;
+		border-radius: 100rpx;
+		background-color:rgba(0,0,0,.35);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		position: absolute;
+		.text{
+			display: flex;
+			font-size: 32rpx;
+			color: @white;
+			font-weight: 600;
+			text-align: center;
+		}
+	}
+	
+}
+.h5-warp{
+	position: sticky;top: 0;z-index: 100;
+}
+.ch-warp{
+	
+	position: sticky;
+	flex-direction: row;
+	top:0;
+	z-index: 300;
+	display: flex;
+	left: 0;
+	right: 0;
+}
+</style>

@@ -1,0 +1,538 @@
+<template>
+ <div class="flx-column bg-black " >
+	 <block v-if="!init"><ks-loading-page :vstyle="'background-color:#000000 '"></ks-loading-page></block>
+	 <block v-else>
+		 <!-- :current="current" -->
+			<swiper  :current="1"
+			 @transition="onTransHandle"	 @change="onChangeSwiper"  :style="syncHeightCls" class="bg-black1 " :indicator="false" :circular="true" :vertical="true">
+					<swiper-item  class="flx-column" style="align-items: stretch">
+							<ks-video-player :muted="muted" :vwidth="w_width" :loop="false" :item="item_1" :vstyle="syncHeightCls" @playend="onPlayend"  @toast="onToastHandle"  @subshow="subShowHandle" @toplayer="toPlayerClick" @invita="invitaClick" :showlist="false"></ks-video-player>
+					</swiper-item>
+					<swiper-item  class="flx-column" style="align-items:stretch">
+							<ks-video-player :muted="muted" :vwidth="w_width" :loop="false" :item="item_2" :vstyle="syncHeightCls" @playend="onPlayend"  @toast="onToastHandle"  @subshow="subShowHandle" @toplayer="toPlayerClick" @invita="invitaClick" :showlist="false"></ks-video-player>
+					</swiper-item>
+					<swiper-item  class="flx-column" style="align-items:stretch">
+							<ks-video-player :muted="muted" :vwidth="w_width" :loop="false" :item="item_3" :vstyle="syncHeightCls" @playend="onPlayend"  @toast="onToastHandle"  @subshow="subShowHandle" @toplayer="toPlayerClick" @invita="invitaClick" :showlist="false"></ks-video-player>
+					</swiper-item>
+				</swiper>
+				<div class="cover">
+					<text class="iconfont" @click.stop="titleBackClick">&#xe672; {{(course_info && course_info.title)||''}}</text>
+				</div>
+
+<ks-poup direction="bottom" @close="showOffHandle" :show_stus="chaps_show"  :mask="true">
+		<div class="board " v-if="current_sub_tab">
+					<div class="title">
+						<text class="text">{{(currentitem && currentitem.title)||''}} </text> 
+					</div>
+					<div class="tab">
+						<text :class="['txt',(tab==current_sub_tab)?'active':'']" v-for="tab in sub_tabs" @tap.stop="onSubTapHandle($event,tab)">{{tab.title}}</text>
+					</div>
+					<div class="content">
+			<div :class="['item', (Number(sub.chap)== currentitem.chap)?'active':'']" v-for="sub in current_sub_tab.subs"  @tap.stop="hobbyClick($event,sub)">
+							<text
+							:class="['txt iconfont', (Number(sub.chap)== currentitem.chap)?'active':'']" 
+							>{{(Number(sub.chap)== currentitem.chap)?'&#xe60b;':sub.chap}}</text>
+							<text class="lock iconfont" v-if="sub.lock">&#xe609;</text>
+						</div>
+					</div>
+					</div>
+				</ks-poup>
+				
+	<div class="lock-container" v-if="lock_show" @touchmove.stop.prevent="lockMoveHandle" >
+		<!-- @touchstart.stop.prevent="lockMoveHandle" @touchend.stop.prevent="lockMoveHandle" -->
+		<div class="msk" @click="util_router_back"  style="z-index: 0;"></div>
+		<div style="z-index: 10;">
+			<ks-reading-pay-compent
+			 :chaper_info="currentitem"
+			 @pchater_clk="payHandle('chapter')" 
+			 @reward_clk="payHandle('reward')" 
+			 @rec_clk="payHandle('charge')"
+			 @vip_clk="payHandle('vip')">
+			 </ks-reading-pay-compent>
+		</div>
+		<!-- <text class="txt">本集为付费内容 继续观看请</text> -->
+	</div>	
+	<div class="lock-container" v-if="guess" @touchmove.stop.prevent="lockMoveHandle" >
+		<div class="msk" @click="util_router_back"  style="z-index: 0;"></div>
+		<!-- @touchstart.stop.prevent="lockMoveHandle" @touchend.stop.prevent="lockMoveHandle" -->
+		 <div class="flx-column  recomend" style="z-index: 10;">
+			  <div class="txt-container">
+				  <text class="txt">{{e18n('over')}}</text>
+			  </div>
+			 <ks-tylist-vm-list :list="guess" ></ks-tylist-vm-list>
+		 </div>
+		<!-- <text class="txt">本集为付费内容 继续观看请</text> -->
+	</div>	
+	<ks-message-center :pagename="pagename" :agree="true"></ks-message-center>
+	</block>
+ </div>
+</template>
+
+<script>
+	let interval_handle=0;
+    export default {
+		data(){
+			return {
+                 current:1,
+				 current_step:0,
+				 init:0,
+				 is_show: true,
+				 pagename:'video_player',
+				 w_width:750,
+				 w_height:1280,
+				 videos:[],
+				 item_1:null,
+				 item_2:null,
+				 item_3:null,
+				 currentitem:null,
+				 video_idx:0,
+				 inmoving:false,
+				 inmoving_handle:0,
+			
+				 course_id:1,
+				 course_info:'',
+				 chap:1,
+				 
+				 lock_show:false,
+				 chaps_show:false,
+				 current_sub_tab:null,
+				 sub_tabs:[],
+				 muted:false,
+				 start_study_time:0,
+				 user_info:null,
+				 guess:null,
+            }
+		},
+		 computed:{
+				syncHeightCls(){
+						return `height:${this.w_height}px;width:${this.w_width}px;`
+				}
+		 },
+		 methods:{
+			  ...getApp().globalData.util,
+			  lockMoveHandle(e){
+				  console.log("lockMoveHandlelockMoveHandlelockMoveHandlelockMoveHandle");
+				  // this.util_router_back();
+				   e.stopPropagation();
+			  },
+			 hobbyClick(e,sub){
+				   e.stopPropagation();
+				  this.showOffHandle();
+				  this.playByIdx(sub.chap-1);
+			  },
+			  invitaClick(){
+			  				  let txt=this.getShareUrl();
+			  				  this.setClipBoard(txt,()=>{
+			  				  	this.util_dialog({message:this.e18n('mine.invite_now_copyed'),pagename:this.pagename});
+			  				  	uni.hideToast();
+			  				  })
+			  },
+			  titleBackClick(e){
+				  	this.util_router_back();
+			  },
+			  playByIdx(idx){
+				  this.video_idx=idx%this.videos.length;
+				  let tempitem=this.videos[this.video_idx];
+				 switch(this.currentitem){
+					  case this.item_1:
+						  this.item_1 =tempitem;
+						  this.item_2 =null
+						  this.item_3 =null
+					  break;
+					  case this.item_2:
+						  this.item_1 =null
+						  this.item_2 =tempitem;
+						  this.item_3 =null
+					  break;
+					  case this.item_3:
+						  this.item_1 =null
+						  this.item_2 =null
+						  this.item_3 =tempitem;
+					  break;
+					}
+				  this.currentitem=tempitem;
+				  this.playCurrentItem(this.currentitem);
+			  },
+			  onTransHandle(e){
+				  if(this.inmoving) return ;
+				  let dy=e.detail.dy;
+				  console.log('onTransHandle',dy)
+				  let tempitem=this.getItemByIdx(this.video_idx+(dy>0?1:-1))
+				  switch(this.currentitem){
+					  case this.item_1:
+						  if(dy>0){
+							if(this.item_2!=tempitem) this.item_2=tempitem;
+						  }else{
+							if(this.item_3!=tempitem) this.item_3=tempitem;
+						  }
+					  break;
+					  case this.item_2:
+							if(dy>0){
+								if(this.item_3!=tempitem) this.item_3=tempitem;
+							}else{
+								if(this.item_1!=tempitem) this.item_1=tempitem;
+							}
+					  break;
+					  case this.item_3:
+							 if(dy>0){
+								if(this.item_1!=tempitem) this.item_1=tempitem;
+							 }else{
+								if(this.item_2!=tempitem) this.item_2=tempitem;
+							}
+					  break;
+				  }
+			  },
+			  
+			  getItemByIdx(tidx){
+				  tidx%=this.videos.length;
+				  if(tidx<0) tidx+=this.videos.length;
+				  return this.videos[tidx];
+			  },
+			  playCurrentItem(item){
+				  //console.log('current play vido:',item?item.title:'null', 'up:'+(this.upitem?this.upitem.title:'null'),'down:'+(this.downitem?this.downitem.title:'null'));
+				  this.lock_show=item.lock;
+				  if(this.lock_show) {
+					   this.dispatchEvent('play_video_event',null);
+					  return;
+				  }
+				  if(!!item)item.pstus=1;
+				  this.dispatchEvent('play_video_event',item);
+				  this.api().addHistory(item.id,item.chap,res=>{},err=>{});
+			  },
+			  showOffHandle(){
+				  this.chaps_show=false;
+			  },
+			  subShowHandle(){
+				  this.chaps_show=true; 
+			  },
+			  payChapterHandle(){
+				  if(this.user_info && this.user_info.coin> Number(this.currentitem.price_desc)){
+				  						   this.api().pay_chapter(this.currentitem.id,this.currentitem.chap,res=>{
+				  							   this.currentitem.lock=0;
+				  							   this.playCurrentItem(this.currentitem);
+											    this.util_toast(this.e18n('well_done'),0,this.pagename)
+				  						   },err=>{
+				  							   this.util_toast(err,0,this.pagename)
+				  						   })
+				  }else{
+				  						   this.util_router_push('pages/usr_recharge');
+				  }
+			  },
+			  payHandle(type){
+				  console.log('payHandle',type);
+				  switch(type){
+					  case 'chapter':
+					   this.payChapterHandle();
+					  break;
+					  case 'vip':
+					   this.util_router_push('pages/usr_vip');
+					  break;
+					  case "charge":
+					   this.util_router_push('pages/usr_recharge');
+					  break;
+					  case "reward":
+					   this.util_router_push('pages/usr_recharge');
+					  break;
+				  }
+			  },
+			  
+			  onPlayend(e){
+			  	   //console.log('onPlayend',e);	
+				    let next = this.video_idx+1;
+					if(next >=this.videos.length ){
+						// all over recomend
+						this.api().changeGuess((res)=>{
+						    this.guess=res.slice(0,4);
+							console.log('guess',this.guess)
+						})
+					}else{
+						 this.playByIdx(this.video_idx+1);
+					}
+			  },
+			  onToastHandle(mes,dura=0){
+				  this.util_toast(mes,dura,this.pagename);
+			  },
+			  onChangeSwiper(e) {
+					 let _t_current=this.current%3;
+					 let _d_current= e.detail.current%3;
+					 this.current= e.detail.current;
+					  console.log('swiperchange',_t_current,_d_current, this.current,e.detail.current);
+					 let swp_step=((_d_current-_t_current==1)||(_d_current-_t_current==-2))?1:-1;
+					 let temp_idx = this.video_idx + swp_step;
+					  console.log('swiperchange2',temp_idx);
+					  
+					  clearTimeout(this.inmoving_handle)
+					  this.inmoving=true;
+					  this.inmoving_handle=setTimeout(()=>{
+						  this.inmoving=false;
+					  },500);
+					 this.updateVideos(temp_idx);
+			  },
+			  updateVideos(tidx){
+				  if(this.item_1) this.item_1.pstus=0;
+				  if(this.item_2) this.item_2.pstus=0;
+				  if(this.item_3) this.item_3.pstus=0;
+				   tidx%=this.videos.length;
+				  if(tidx<0) tidx+=this.videos.length;
+				  this.video_idx =tidx;
+				  let tempItem=this.videos[this.video_idx];
+				  let item_idx=((this.current%3)+1);
+				  this.currentitem=this['item_'+item_idx]=tempItem;
+				 switch(item_idx){
+					 case 1:
+					  this.item_2=this.item_3=null;
+					 break;
+					 case 2:
+					  this.item_1=this.item_3=null;
+					 break;
+					 case 3:
+					  this.item_1=this.item_2=null;
+					 break;
+					}
+				  this.playCurrentItem(this.currentitem);
+			  },
+			  onSubTapHandle(e,tab){
+				  e.stopPropagation();
+				  this.current_sub_tab=tab;
+			  },
+			  onItemInfoListener(item){
+			  				  if(this.videos){
+								  this.videos.forEach(sub=>{
+									 if( sub.id==item.id){
+										  sub.is_collected=item.is_collected;
+									 }
+								  })
+			  				  }
+			  },
+			  loadVideos(){
+			  	this.api().getCourseInfo(this.course_id,this.chap,res => {
+										this.init=this.getInitStaus();
+										this.course_info=res.info;
+										let list=res.list;
+										this.video_idx=0;
+										let tempArr=[];
+										list.forEach((item)=>{
+											item.pstus=0;
+											item.seek=0;
+											//item.src=item.file+'1.mp4';
+											tempArr.push(item);
+										})
+										this.videos=tempArr;
+										this.sub_tabs = res.tabs;
+										this.current_sub_tab=this.sub_tabs[0];
+										this.updateVideos(this.chap-1);
+										setTimeout(()=>{ this.playCurrentItem(this.currentitem);},650)
+										
+										})
+			  },
+		 },
+		 onReady() {
+		 },
+		onDestroy() {
+		  // this.$broadcast('onDestroy')
+		},
+		onShow() {
+			if(this.currentitem) this.lock_show=this.currentitem.lock;
+			 this.muted = getApp().globalData.muted
+			 console.log('library page show');
+			 if(!!this.currentitem) setTimeout(()=>{this.playCurrentItem(this.currentitem)},250);
+			 this.keeptabBarTxt();
+			 this.start_study_time=this.time();
+			   console.log('video_player show');
+			 this.updateUserinfo((user_info)=>{
+				 this.user_info=user_info;
+				 console.log('user_info',user_info)
+			 })
+		},
+		onHide() {
+		    console.log('video_player hide');
+		   this.dispatchEvent('play_video_event',null);
+		   this.addStudyTime(Math.ceil((this.time()-this.start_study_time)));
+		},
+		onUnload(){
+			this.dispatchEvent('play_video_event',null);
+			this.addStudyTime(Math.ceil((this.time()-this.start_study_time)));
+		},
+		onLoad(params) {
+			this.course_id=params.course_id;
+			this.chap=params.chap??1;
+			this.addEventListener('item_info_event',this.onItemInfoListener);
+			if(getApp().globalData.muted) this.addEventListener('video_muted_event',()=>{
+				 this.muted = getApp().globalData.muted=false
+				  console.log('video_muted_event false');
+			});
+			this.getWindowInfo((w)=>{
+				this.w_width=w.windowWidth;
+				this.w_height = w.windowHeight;	
+			})
+			 this.getInitDataCb(()=>{
+				 uni.setNavigationBarTitle({title:this.getSiteName() })
+				 this.loadVideos();
+			 })
+		},
+    }
+</script>
+
+<style lang="less" scoped>
+	@import './../../assets/styles/style.less';
+	
+	.lock-container{
+		position: fixed;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		
+		.msk{
+			background-color: rgba(0, 0, 0, .65);
+			position: absolute;
+			left: 0;
+			right: 0;
+			top: 0;
+			bottom: 0;
+		}
+	}
+	
+	.recomend{
+		padding: 10rpx;
+		width: 730rpx;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+		align-items: stretch;
+		.txt-container{
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			.txt{
+				display: flex;
+				text-align: center;
+				font-size: 32rpx;
+				color: @white2;
+				margin-bottom: 100rpx;
+			}
+		}
+		
+	}
+	
+	.cover{
+		position: fixed;
+		left: 0;
+		right: 0;
+		top: 0;
+		display: flex;
+		justify-content: flex-start;
+		align-items: flex-start;
+		/* #ifdef H5*/
+				  margin-top: 25rpx;
+		/* #endif */
+		/* #ifndef H5 */
+			margin-top: 100rpx;
+		/* #endif */
+		.iconfont{
+			padding: 15rpx;
+			font-size: 36rpx;
+			color: @white;
+			font-weight: 600;
+		}
+	}
+	.board{
+	  flex-direction: column;
+	  padding: 0rpx 20rpx;
+	  background-color: @white;
+	   display: flex;
+	   border-top-left-radius: 25rpx;
+	   border-top-right-radius: 25rpx;
+	  .title{
+	      justify-content: center;
+	      align-items: center;
+			 flex-direction: row;
+	        height: 100rpx;
+			display: flex;
+	      .text{
+	        font-size: 32rpx;
+	        font-weight: 800;
+	        color: @black2;
+	      }
+	      .btn{
+	        position: absolute;
+	        right: 20rpx;
+	        background-color: @them;
+	        padding: 8rpx 20rpx;
+	        color: @white;
+	        border-radius: 10rpx;
+	      }
+	      border-bottom-color: @white3;
+	      border-bottom-width: 1rpx;
+	  }
+		.tab{
+			padding: 15rpx;
+			display: flex;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: flex-start;
+			.txt{
+				font-size: 28rpx;
+				color:  @black3;
+				text-align: center;
+				margin-right: 30rpx;
+			}
+			.active{
+				font-weight: 600;
+				color: @black;
+			}
+		}
+		.content{
+		  background-color: @white;
+		  padding: 20rpx 0rpx;
+		  justify-content: flex-start;
+		  align-items: flex-start;
+		  flex-wrap: wrap;
+		  flex-direction: row;
+		  display: flex;
+		  padding-bottom: 100rpx;
+		  height: 600rpx;
+		  .item{
+		      margin: 12rpx;
+			  background-color: @white2;
+		      align-items: center;
+		      justify-content: center;
+			  display: flex;
+			 .radius-box(15rpx);
+			 width:90rpx;
+			 height: 90rpx;
+			 position: relative;
+			 .txt{
+				 .txt-lines(1);
+				 font-size: 32rpx;
+				 text-align: center;
+				 color: @black2;
+			 }
+			 .lock{
+				 position:absolute;
+				 top:0;
+				 right:0;
+				 background-color: @white3;
+				 padding: 5rpx 10rpx;
+				 color: @grey;
+				 font-size: 24rpx;
+				 border-top-right-radius: 5rpx ;
+				 border-bottom-left-radius: 5rpx;
+			 }
+		  }
+		  .active{
+		      background-color: @orange3;
+			  color: @white;
+			  .txt{
+				   color: @white;
+			  }
+		  }
+		}
+	}
+	
+</style>

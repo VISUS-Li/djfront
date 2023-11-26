@@ -1,0 +1,395 @@
+<template>
+  <div class="flx-column" >
+	  <block v-if="init===2">
+	  	<ks-miniprogram></ks-miniprogram>
+	  </block>
+     <block v-if="!init">
+       <ks-loading-page :vstyle="'background-color:#000000 '"></ks-loading-page>
+     </block>
+     <block v-if="init===1">
+	<!-- #ifdef H5 -->
+		<ks-h5-navi-title :title="e18n('daily_benefits')"></ks-h5-navi-title>
+	<!-- #endif -->
+		<div class="flx-column title-bar bg-def pdw5"   v-if="welfraeInfo">
+				<div class="pd5"></div>
+				<div class="s-radius-top"></div>
+				<div class="s-radius-content bg-white" >
+				  <text class="day">{{welfraeInfo.d}}</text>
+				  <div class="flx-column div">
+					<text class="week">{{welfraeInfo.w}}</text>
+					<text class="month">{{welfraeInfo.m}}  {{welfraeInfo.year}}</text>
+				  </div>
+				  <div class="info div">
+					  <text class="text">{{welfraeInfo.coin}}</text>
+				  </div>
+				</div>
+        </div>
+      <div class="flx-column   pdw5 bg-white3" v-if="welfraeInfo">
+          <div class="pd2  bg-white1"> </div>
+         <div class=" pdw5 s-sigin-content bg-white1">
+            <div class="line"></div>
+			 <div v-for="(item,$idx) in welfraeInfo.sign_config" class="s-sigin-pro-item">
+			   <text class="text">{{item.title}}</text>
+							<image class="image" :src="require('../../assets/images/Welfare-cha.png')" v-if="(item.is_type==0) "></image>
+							<image class="image" :src="require('../../assets/images/Welfare-dui.png')" v-if="item.is_type==1 "></image>
+							<image class="image" :src="require('../../assets/images/Welfare-dou.png')" v-if="item.is_type==2 && item!=today_item"></image>
+							<image class="image" :src="require('../../assets/images/Welfare-bao.png')" v-if="item.is_type==2 && item==today_item"></image>
+			 </div>
+          </div>
+         <div class=" pdw5 s-sigin-box bg-white1">
+              <ks-rich-text :strs="hlighTxt({txt:is_today_singed?'today_checked_num':'today_check_num',cls:'t-b-2 center'},{num:{txt:today_coin,cls:'t-y-3 pdw1'},coin:{txt:coinName(),cls:'t-b-2'} })" :vstyle="'flex-direction: row; justify-content: center; align-items: flex-start; flex: 1;'"></ks-rich-text>
+              <div :class="['button',is_today_singed?'d-active':'']" @tap="siginClick"><text :class="['text',is_today_singed?'t-g-3':'t-w-3']">{{e18n('checkin_now')}}</text></div>
+              <ks-rich-text :strs="hlighTxt({txt:'week_check_up_num',cls:'t-g-1 center'},{num:{txt:welfraeInfo.sign_total_coin,cls:'t-y-2 pdw1'},coin:{txt:coinName(),cls:'t-g-1'} })" :vstyle="'flex-direction: row; justify-content: center; align-items: flex-start; flex: 1;'"></ks-rich-text>
+          </div> 
+         <div class="flx-column  pdw5 s-sigin-list bg-white1" v-if="welfraeInfo">
+            <ks-typography-title :title="e18n('daily_reading_benefits')" :vstyle="'color:#000000'"></ks-typography-title>
+            <div v-for="($item,$idx) in  welfraeInfo.daily_read_config" class="w100 s-sigin-list-item" >
+                <div class="left">
+                  <div class="left-top">
+                    <image style="width:30rpx;height: 30rpx;" :src="require('../../assets/images/Stars_icon.png')"></image>
+                    <text class="title">{{e18n('read_for_num',{num:$item.key})}}</text>
+                    <image class="image" :src="require('../../assets/images/bookbean_icon.png')"></image>
+                      <text class="tip">+{{e18n('num_coin',{num:$item.coin,coin:coinName()})}}</text>
+                    </div>
+                  <text class="desc">{{e18n('when_reading_get',{num1:$item.key,num2:$item.coin,coin:coinName()})}}</text>
+                </div>
+                <div class="right"> 
+                  <text :class="['text',$item.status==2?'txt-active':'']" @tap="onReadClick($item)">{{e18n($item.status==2?'received':'to_read')}}</text>
+                </div>
+            </div>
+        </div>
+          <div class="s-radius-bottom"></div>
+          <div class="s-bottom"></div>
+        </div>
+
+     </block>
+	    <ks-message-center :pagename="pagename" :agree="true"></ks-message-center>
+  </div>
+</template>
+
+<script>
+export default {
+
+  data(){
+	  return {
+		 sigin:false,
+		 sigin_ret_show:false,
+		 welfraeInfo:null,
+		 pagename:'book_welfare',
+		 init:0, 
+	  }
+  },
+  methods:{
+	    ...getApp().globalData.util,
+		refresh(){
+		    this.api().welfareBaseInfo(res=>{
+		              this.init=this.getInitStaus();
+					   this.welfraeInfo=res;
+					   if( this.init=1){
+						setTimeout(()=>{this.firstHandle(this.pagename)},1500);
+					   }
+		              console.log(res);
+		          }) 
+		},
+		
+		siginClick(){
+			console.log('siginClick');
+		  if(this.is_today_singed) return ;
+		   this.api().welfareCheckin(this.today_coin,res=>{
+		        this.today_item.is_type=1;
+		        this.welfraeInfo.coin+=this.today_coin;
+		        console.log('siginClick 1');
+				let red_data={
+					pagename:this.pagename,
+					title:this.e18n('redbag.sign_title'),
+					sub_title:this.e18n('redbag.sign_sub_title'),
+					content:this.today_coin,
+					ok:this.e18n('redbag.sign_ok'),
+					suc:(res)=>{
+		                        console.log('siginClick 2');
+		                        this.refresh();
+		                    }};
+				this.openRedWindow(red_data)
+		   })
+		},
+		onReadClick(item){
+			console.log('onReadClick',item);
+			if(item.status!=2){
+				  this.util_router_push('pages/video_lib')
+			}
+		}
+  },
+  onShow() {
+	  this.keeptabBarTxt();
+	  this.getInitDataCb(()=>{
+		    uni.setNavigationBarTitle({title:this.e18n('welfare')})
+		   this.refresh();
+	  })
+  },
+  onHide() {
+  },
+  computed:{
+    today_item(){
+      return  this.welfraeInfo? this.welfraeInfo.sign_config.find(item=> item.title==this.welfraeInfo.w):null;
+    },
+    today_coin(){
+      return this.today_item?this.today_item.coin:0;
+    },
+    is_today_singed(){
+       return this.today_item?(this.today_item.is_type==1):false;
+    }
+  },
+}
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+	
+	page{
+		background-color: @black;
+	}
+.s-top{
+  padding-left: 25rpx;
+  padding-right: 25rpx;
+
+}
+.s-radius-top{
+  border-top-left-radius: 25rpx;
+  border-top-right-radius: 25rpx;
+  height: 25rpx;
+  background-color: @white;
+}
+
+.s-radius-content{
+  padding-left: 25rpx;
+  padding-right: 25rpx;
+  background-color: @white;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  display: flex;
+  flex:1;
+  .div{
+     justify-content: space-around;
+	 flex-direction: column;
+	 display: flex;
+	 .week{
+	   font-size: 36rpx;
+	   font-weight: 900;
+	   color: @them;
+	 }
+	 .month{
+	   font-size: 28rpx;
+	   color: @grey;
+	 }
+  }
+  .day{
+    font-size: 85rpx;
+    font-weight: 900;
+    color: @them;
+    margin-right: 20rpx;
+  }
+ 
+  .info{
+	  justify-content: space-between;
+	  align-items: center;
+	   flex-direction: row;
+    .text{
+      font-size: 40rpx;
+      font-weight: 900;
+      color: @them;
+      background-image: url('../../assets/images/bookbean_icon.png');
+      background-position: right center;
+      background-size: 40rpx 40rpx;
+      background-repeat: no-repeat;
+      padding-right: 60rpx;
+    }
+    .image{margin-left: 20rpx;width: 30rpx;}
+  }
+ 
+}
+.s-sigin-content{
+  justify-content: space-between;
+  display: flex;
+  position: relative;
+   flex-direction: row;
+  .s-sigin-pro-item{
+    flex-direction: column;
+	display: flex;
+    align-items: center;
+   
+	z-index: 20;
+    .image{
+      margin-top: 20rpx;
+      width: 40rpx;
+	  height: 40rpx;
+      background-color:@white;
+    }
+	.text{
+		font-size: 28rpx;
+		color:@grey;
+	}
+  }
+  .line{
+      position: absolute;
+      left: 0rpx;
+      right: 0rpx;
+      top: 0rpx;
+      bottom: 18rpx;
+      border-bottom-color: @grey;
+      border-bottom-width: 5rpx;
+	  border-bottom-style: solid;
+  }
+}
+
+.s-sigin-box{
+  padding-top: 25rpx;
+  flex-direction: column;
+  align-items: center;
+  display: flex;
+  .top{
+    font-size: 28rpx;
+    color: @black;
+    padding-bottom: 25rpx;
+  }
+
+  .button{
+    background-color: @them;
+    width: 550rpx;
+	
+    border-top-left-radius: 40rpx;
+    border-top-right-radius: 40rpx;
+    border-bottom-left-radius: 40rpx;
+    border-bottom-right-radius: 40rpx;
+    padding: 25rpx;
+    justify-content: center;
+    align-items: center;
+	display: flex;
+     margin-bottom: 25rpx;
+     margin-top: 25rpx;
+	  flex-direction: row;
+    /* :disable{
+       background-color: @grey2;
+       text{
+         color: @grey;
+       }
+    } */
+    .text{
+      color: @white;
+      font-size: 32rpx;
+      font-weight: 800;
+    }
+  }
+  .d-active{
+	   background-color: @grey2;
+	   .text{
+		    color: @white2;
+	   }
+  }
+  
+  .t-yd-3{
+    font-size: 36rpx;
+    font-weight: 800;
+    color: #cc6600;
+  }
+
+
+  .bottom{
+    font-size: 28rpx;
+    color: @grey;
+    padding-bottom: 25rpx;
+  }
+}
+
+.s-sigin-list-item{
+   padding-top: 20rpx;
+   display: flex;
+   flex-direction: row;
+   justify-content: center;
+   
+   align-items: center;
+  .left{
+	flex:1;
+    flex-direction: column;
+    padding-bottom: 30rpx;
+    border-bottom-color: @grey;
+    border-bottom-width: 1rpx;
+    margin-right: 10rpx;
+    .left-top{
+	  flex-direction: row;
+      align-items: flex-start;
+	  display: flex;
+      
+      .image{
+        margin-left: 30rpx;
+        width: 30rpx;
+		height: 30rpx;
+      }
+      .title{
+        font-size: 32rpx;
+        color: @black2;
+        font-weight: 600;
+      }
+      .tip{
+         font-size: 24rpx;
+         color: @grey;
+      }
+    }
+    .desc{
+      padding-top: 20rpx;
+      font-size: 24rpx;
+      color: @grey;
+    }
+  }
+  .right{
+    justify-content: center;
+    align-items: flex-end;
+	flex-direction: row;
+	display: flex;
+    .text{
+      border-color: @grey;
+      border-width: 1rpx;
+      border-radius: 10rpx;
+	  border-style: solid;
+      padding: 20rpx;
+      font-size: 28rpx;
+      color: @black2;
+      font-weight: 800;
+    }
+	.txt-active{
+		color: @grey;
+		font-weight: 800;
+	}
+  }
+}
+.s-radius-bottom{
+  border-bottom-left-radius: 25rpx;
+  border-bottom-right-radius: 25rpx;
+  height: 25rpx;
+  background-color: @white;
+}
+.s-bottom{
+  height: 250rpx;
+}
+
+.wrapper {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+   flex-direction: row;
+}
+.title {
+  text-align: center;
+  color: #212121;
+}
+
+.container{
+  justify-content: center;
+  align-content: center;
+  text-align: center;
+  align-content: center;
+   flex-direction: row;
+   display: flex;
+}
+</style>

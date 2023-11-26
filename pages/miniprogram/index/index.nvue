@@ -1,0 +1,27 @@
+<template>
+	<view>
+		<ks-miniprogram></ks-miniprogram>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				
+			}
+		},
+		methods: {
+			
+		},
+		onLoad() {
+			uni.setNavigationBarTitle({
+				title:"课程"
+			})
+		}
+	}
+</script>
+
+<style>
+
+</style>

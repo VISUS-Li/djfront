@@ -1,0 +1,61 @@
+ <template>
+	<div :class="vmlist_root" >
+				<ks-tybook-vm-item v-for=" item in list" @tapclick="$emit('tapclick',item)" @del="$emit('del',item)" @add="$emit('add',item)" :item="item" :class="isbelow?'mr5':'mb4'" :cto="cto"> </ks-tybook-vm-item>
+				<div  v-for=" item in spans" class="span"></div>
+	</div>
+</template>
+
+<script>
+    export default {
+        props:{
+            list:Array,
+			 cto:{
+				type:String,
+				default:'detail',
+			},
+        },
+		data(){
+			return {
+				couls:3
+			}
+		},
+		methods:{	...getApp().globalData.util,},
+		computed:{
+			spans(){
+				if(this.isbelow) return [];
+				let len=  this.couls-this.list.length%this.couls;
+				let _spans=[];
+				for( let i=0;i<len;i++) _spans.push('');
+				return _spans;
+			},
+			isbelow(){
+				return this.list.length < this.couls;
+			},
+			vmlist_root(){
+				return (this.isbelow?"flext-start":"flext-between ")
+			}
+		},
+    }
+</script>
+
+<style lang="less">
+    @import url("./../../assets/styles/style.less");
+    .flext-between {
+        display: flex;
+        flex-wrap: wrap;
+		align-items: flex-start;
+		justify-content: space-between;
+		flex-direction: row;
+    }
+	
+	.flext-start{
+		display: flex;
+		flex-wrap: wrap;
+		flex-direction: row;
+		align-items: flex-start;
+		justify-content: flex-start;
+	}
+	.span{
+		width: 190rpx;
+	}
+</style>

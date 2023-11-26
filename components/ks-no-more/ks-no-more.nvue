@@ -1,0 +1,64 @@
+<template>
+  <div class="nomorewarp" :style="vstyle">
+    <div :style="tagStyle" class="tag"></div>
+    <text class="title" :style="vstyle">{{ loading ?e18n('loading') :e18n('no_more') }}</text>
+    <div :style="tagStyle" class="tag"></div>
+  </div>
+</template>
+
+<script>
+
+	export default {
+		methods:{...getApp().globalData.util,},
+		props:{loading:Boolean, vstyle:String},
+		
+		computed:{
+			tagStyle(){
+				
+				if(this.vstyle){
+					let _vstyles=this.vstyle.split(';');
+					let _sobj={};
+					_vstyles.forEach((str)=>{
+						let kvs=str.split(':');
+						_sobj[kvs[0]]=kvs[1];
+					})
+					let color=_sobj['color'];
+					_sobj['color']=_sobj['background-color'];
+					_sobj['background-color']=color;
+					let _nvstyle="";
+					for( let key in _sobj){
+						_nvstyle+=(key+":"+_sobj[key]+";")
+					}
+					return _nvstyle;
+				}
+				return '';
+			}
+		}
+}
+</script>
+<style lang="less" scoped>
+	@import './../../assets/styles/style.less';
+.nomorewarp {
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  height: 120rpx;
+  display: flex;
+  
+  .tag{
+    height: 1rpx;
+    background-color: @white3;
+	flex:2;
+    margin-left: 10rpx;
+    margin-right: 10rpx;
+  }
+  .title {
+	  flex:3;
+    color:@white3;
+    font-size: 28rpx;
+	.txt-lines(1);
+	text-align: center;
+  }
+}
+
+</style>

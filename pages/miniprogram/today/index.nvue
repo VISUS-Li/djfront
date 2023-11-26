@@ -1,0 +1,80 @@
+<template>
+	<view class="warper">
+		<image :src="item.image" mode="aspectFill"></image>
+		<div class="pd3"></div>
+		<text class="title">{{item.title}}</text>
+		<div class="pd5"></div>
+		<text class="content">{{item.content}}</text>
+		<div style="margin-bottom: 180rpx;background-color: #4D77FD;width:70%;display: flex; flex-direction: row;justify-content: center; border-radius: 25rpx;">
+			<text @click="util_router_back()" style="color: #ffffff;font-size: 28rpx;padding: 25rpx;" >返回</text>
+			<text @click="util_toast('收藏成功')" style="color: #ffffff;font-size: 28rpx;padding: 25rpx;" >收藏</text>
+		</div>
+		
+		<div style=" background-color: #ececec;    border-top: solid #ececec 1;  padding-top: 20rpx;  padding-bottom: 20rpx; display: flex;flex-direction: row; justify-content: space-between; position: fixed; bottom: 0;left: 0;right: 0;">
+			<div style="flex-direction: column; flex: 1;display: flex; align-items: center;" @click="util_router_push('pages/miniprogram/index',{id:18})">
+				<image :src="require('@/assets/images/tabBar/tab_icon1_def.png')" style="width: 60rpx; height: 60rpx; padding-bottom: 10rpx;"></image>
+				<text style="font-size: 28rpx; color:#333333; text-align: center;">课程</text>
+			</div>
+			<div style="flex-direction: column; flex: 1;display: flex;align-items: center;" >
+				<image :src="require('@/assets/images/tabBar/tab_icon2_sel.png')" style="width: 60rpx; height: 60rpx; padding-bottom: 10rpx;" ></image>
+				<text style="font-size: 28rpx; color: #4D77FD; text-align: center;">今日必读</text>
+			</div>
+			<div style="flex-direction: column; flex: 1;display: flex;align-items: center;" @click="util_router_push('pages/miniprogram/mine',{id:18})">
+				<image :src="require('@/assets/images/tabBar/tab_icon3_def.png')" style="width: 60rpx; height: 60rpx; padding-bottom: 10rpx;" ></image>
+				<text style="font-size: 28rpx; color:#333333; text-align: center;">我的</text>
+			</div>
+		</div>
+		
+	</view>
+</template>
+
+<script>
+
+	import $pdata from '@/pages/miniprogram/pdata.js';
+	import $utils from '@/helper/utils.js'
+	export default {
+		data() {
+			return {
+				id:'',
+				item:'',
+			}
+		},
+		methods: {
+			...getApp().globalData.util
+		},
+		onLoad(params) {
+			uni.setNavigationBarTitle({
+				title:"详情"
+			})
+			
+			this.id=params.id;
+			this.item=$pdata.getDataById(this.id);
+			
+			
+		}
+	}
+</script>
+
+<style lang="less" scoped>
+	@import './../../../assets/styles/style.less';
+	.warper{
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		image{
+			width: 100%;
+		}
+		.title{
+			font-size: 40rpx;
+			color: @black;
+			font-weight: 800;
+			text-align: center;
+		}
+		.content{
+			font-size: 28rpx;
+			color: @grey;
+			line-height: 65rpx;
+			padding: 35rpx;
+		}
+	}
+</style>

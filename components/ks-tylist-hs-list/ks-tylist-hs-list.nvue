@@ -1,0 +1,67 @@
+<template>
+	<div :class="hslist_root ">
+		<div v-for="item in list"  class="mb4">
+			 <ks-tybook-hs-item :item="item" @tapclick="$emit('tapclick',item)"></ks-tybook-hs-item> 
+		</div>
+		<div  v-for="item  in  spans" class="span"></div>
+	</div>
+</template>
+<script>
+    export default {
+        props:{
+            list:Array
+        },
+		data(){
+			return {
+				couls:2
+			}
+		},
+		methods:{
+			tapclick(e){
+				this.$emit('tapclick',e.detail)
+				console.log('tapclick hs list',e)
+			},
+			...getApp().globalData.util,
+		},
+		computed:{
+			spans(){
+				if(this.isbelow) return [];
+				let len=  this.couls-this.list.length%this.couls;
+				let _spans=[];
+				for( let i=0;i<len;i++) _spans.push('');
+				return _spans;
+			},
+			isbelow(){
+				return this.list.length <this.couls;
+			},
+			hslist_root(){
+				return "flext-between "+(this.isbelow?"flext-start":"")
+			}
+		},
+		created() {
+		  console.log('hs list ',this.list);
+		},
+    }
+</script>
+
+<style lang="less">
+    @import url("./../../assets/styles/style.less");
+    .flext-between {
+        display: flex;
+        flex-wrap: wrap;
+    	align-items: flex-start;
+    	justify-content: space-between;
+		flex-direction: row;
+    }
+    
+    .flext-start{
+    	display: flex;
+    	flex-wrap: wrap;
+    	align-items: flex-start;
+    	justify-content: flex-start;
+		flex-direction: row;
+    }
+    .span{
+    	width: 190rpx;
+    }
+</style>

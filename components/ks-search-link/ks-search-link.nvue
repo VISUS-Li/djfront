@@ -1,0 +1,86 @@
+<template>
+	<div :class="[clss(),'pdw5']" @click="ontapHandle">
+		<image class="image" :src="require('../../assets/images/book-icon1.png')"  mode="widthfix"></image>
+		<text class="text">{{e18n('search.serachPlaceholder')}}</text>
+	</div>
+</template>
+
+<script>
+	export default{
+		props: {
+		  type: String
+		},
+		methods:{	...getApp().globalData.util,
+				ontapHandle(){
+					console.log('search ontapHandle')
+					this.util_router_push('pages/video_search');
+				},
+				clss(){
+					let cls='s-search-white';
+					switch(this.type){
+						case 'grey':
+							cls='s-search-grey';
+							break;
+						case 'white':
+							default:
+							cls='s-search-white';
+						break;
+					}
+					return cls;
+				}
+		}
+	}
+</script>
+
+<style lang="less">
+	@import url("./../../assets/styles/style.less");
+	.s-search-white{
+		background-color:@white;
+		border-radius: 30rpx;
+		// width: 100%;
+		height: 60rpx;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		flex:1;
+		.image{
+			width: 30rpx;
+			height: 30rpx;
+			margin-right: 10rpx;
+		}
+		
+		.text{
+			flex:1;
+			font-size: 28rpx;
+			color: @white3;
+			.txt-lines(1);
+		}
+	}
+
+	.s-search-grey{
+		background-color:@white2;
+		border-bottom-left-radius: 30rpx;
+		border-bottom-right-radius: 30rpx;
+		border-top-left-radius: 30rpx;
+		border-top-right-radius: 30rpx;
+		flex-direction: row;
+		height: 60rpx;
+		flex:1;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		.image{
+			width: 30rpx;
+			height: 30rpx;
+			margin-right: 10rpx;
+		}
+		.text{
+				flex:1;
+			font-size: 28rpx;
+			color: @white3;
+			.txt-lines(1);
+		}
+	}
+	
+</style>

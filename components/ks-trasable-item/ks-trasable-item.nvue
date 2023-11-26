@@ -1,0 +1,43 @@
+<template>
+		<div >
+			<ks-tybook-vm-item  :item="item" @click="$emit('tapclick',item)" :txtbgColor="txtbgColor" v-if="type=='big'"></ks-tybook-vm-item>
+			<ks-tybook-vs-item  :item="item" @click="$emit('tapclick',item)" :txtbgColor="txtbgColor" v-if="type=='small'"></ks-tybook-vs-item>
+		</div>
+</template>
+
+<script>
+	//let animate_id="id_"+Math.random()*100;
+export default {
+	  props:{
+		item:Object,
+		type:{
+		  type:String,
+		  default: 'big'
+		},
+		txtbgColor:{
+		  type:String,
+		  default:''
+		},
+		index:0,
+	  },
+	  data(){
+		  return { 
+				  animate :null,
+				  animate_id:0,
+				  animationData:{},
+				  animation:'',
+				  visible:true,
+				  tempItem:{},
+				  interval_crave_in:0,
+				  interval_crave_out:0,
+				  cur_animation:'',
+			  }
+	  },
+	methods:{
+		...getApp().globalData.util,
+	},
+}
+</script>
+
+<style >
+</style>

@@ -1,0 +1,194 @@
+<template>
+ <div class="root">
+	 <uni-transition mode-class="fade" :show="winstus">
+		 <div class="full center" v-if="winstus">
+		     <div class="s-full msk" @click="mskHandle" v-if="windata.msk" style="z-index: 0;"></div>
+					 <div id="id_panel" class="panel first" style="z-index: 100;">
+						 <text class="title" v-if="windata.title">{{windata.title}}</text>
+						 <text class="subtitle" v-if="windata.sub_title">{{windata.sub_title}}</text>
+						 <div class="content"><text class="num">{{windata.content}}</text> <text class="coin">{{coinName()}}</text></div>
+						 <text class="tiptitle" v-if="windata.tip_title">{{windata.tip_title}}</text>
+						  <text @click="okHandle" class="okbtn">{{windata.ok}}</text>
+					  </div>
+					   <image :src="require('./../../assets/images/xhao.png')" class="cancel" @click="closeHandle" style="z-index: 101;" ></image>
+					   <image :src="require('./../../assets/images/book_bean_img.png')" class="tag" style="z-index: 102;"></image>
+					   	
+		 </div>
+	 </uni-transition>
+ </div>
+</template>
+
+<script>
+import EventBus from '@/helper/EventBus.js';
+var eve_handle=null;
+export default {
+  data(){
+    return {
+  		winstus:false,
+        // windata:{"title":'新用户大礼包', "sub_title":"邀请好友，畅享阅读,更有精彩好礼送不停！",  "tip_title":"点下方按钮，立即收下！", 'content':'75!','cancel':'','ok':"愉快收下！",msk_click_able:false,msk:false },
+    }
+  },
+  props:{
+  	  windata:null,
+  },
+  computed:{
+  	  
+  },
+  methods:{
+  	   ...getApp().globalData.util,
+  	   okHandle(){
+  		   if(this.windata!=null){
+  			   let cb=this.windata['suc'] || null;
+  			   if(cb) cb();
+  		   }
+  		   this.$emit('close')
+  	   },
+  	   closeHandle(){
+  		   if(this.windata!=null){
+  			   let cb=this.windata['fail'] || null;
+  			   if(cb) cb();
+  		   }
+  		   this.$emit('close')
+  	   },
+  	   mskHandle(){
+  		  if(this.windata && this.windata.msk_click_able){
+  			  this.closeHandle();
+  		  }
+  	   }
+  },
+  created() {
+  	this.$watch('windata',(v1,v2)=>{
+  		this.winstus=!!v1;
+  		console.log('iwatched',this.winstus);
+  	})
+  }
+}
+</script>
+
+<style lang="less" scoped>
+  @import './../../assets/styles/style.less';
+  .root{
+    position: fixed;
+
+    .full{
+      position: fixed;
+      left:0;
+      right:0;
+      top:0;
+      bottom: 0;
+    }
+    .s-full{
+	  position: absolute;
+	  left: 0;
+	  right: 0;
+	  top:0;
+	  bottom: 0;
+	  z-index: 0;
+	  width: auto;
+	  height:auto;
+    }
+    .msk{
+      background-color: rgba(0, 0, 0, .35);
+    }
+    .center{
+      display: flex;
+      justify-content: center;
+      align-items: center;
+	  flex-direction: column-reverse;
+    }
+    .panel{
+      border-radius: 25rpx;
+      width: 550rpx;
+      min-height: 300rpx;
+      background-color: @white;
+    }
+
+    .first{
+        display: flex;
+        flex-direction: column;
+	    position: relative;
+		top:-150rpx;
+        justify-content: space-between;
+        align-items: stretch;
+        background-color: @redbag;
+        padding: 65rpx 20rpx 20rpx 20rpx;
+        .title{
+          font-size: 36rpx;
+          font-weight: 600;
+          color: @th-yellow2;
+          padding: 10rpx;
+          text-align: center;
+        }
+        .subtitle{
+          font-size: 28rpx;
+          color: @th-yellow2;
+          padding: 10rpx;
+          line-height: 40rpx;
+          text-align: center;
+        }
+    
+          .content{
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          align-items: center;
+		  min-height: 200rpx;
+           flex:5;
+          .num{
+              font-size: 100rpx;
+              font-weight: 600;
+              color: @th-yellow2;
+              padding: 10rpx;
+              text-align: center; 
+          }
+          .coin{
+            font-size: 36rpx;
+            font-weight: 600;
+            color: @th-yellow2;
+            padding: 10rpx;
+            text-align: center; 
+          }
+        }
+
+      .tiptitle{
+          font-size: 28rpx;
+          color: @th-yellow2;
+          padding: 10rpx;
+          line-height: 40rpx;
+          text-align: center;
+        }
+        .okbtn{
+          background-color: @th-yellow2;
+          font-size: 32rpx;
+          color: @redbag;
+		  font-weight: 600;
+          border-radius: 30rpx;
+          align-self: center;
+           padding: 20rpx;
+          width: 400rpx;
+		   text-align: center;
+        }
+    }
+	.cancel{
+	    width: 45rpx;
+	    height: 45rpx;
+	    align-self: center;
+	    //top:-80rpx;
+	    right: -250rpx;
+		top:-105rpx;
+	    background-color: rgba(0, 0, 0, .15);
+	    border-radius: 40rpx;
+		//position: absolute;
+	  }
+	.tag{
+	      width: 150rpx;
+	      height: 150rpx;
+	      align-self: center;
+		  top:-40rpx;
+		 
+	    }
+    
+  }
+
+
+</style>

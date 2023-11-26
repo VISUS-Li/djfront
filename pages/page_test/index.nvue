@@ -1,0 +1,40 @@
+<template>
+  <div class="flx-column">
+    <ks-loading-page :vstyle="'background-color:#101010 '"></ks-loading-page>
+  </div>
+</template>
+
+<script>
+export default {
+  data(){
+	  return  {
+				init:false,
+				page:1,  //第几页 从 1开始
+				pageSize:50,  //第几页 从 1开始
+				loading:false,
+				pagename:'record',
+			  }
+  },
+  methods:{
+	  ...getApp().globalData.util,
+  },
+
+	onLoad(params) {
+	  },
+  onShow() {
+	  
+  },
+  onHide() {
+  }
+}
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+	/* #ifdef H5 */
+	page{
+			background-color: @black2;
+		}
+	/* #endif */
+
+</style>

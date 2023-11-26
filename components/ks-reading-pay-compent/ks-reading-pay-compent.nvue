@@ -1,0 +1,154 @@
+<template>
+    <div  class="flx-column w100 bg-white radius-15">
+        <div class="pay_top">
+            <text class="text">{{e18n('info.order')}}</text>
+        </div>
+        <div class="pay_center" v-if="chaper_info">
+			<image :src="chaper_info.picture || require('../../assets/images/book_cover_def.png')"  class="book_img"></image>
+            <div class="pay_center_right">
+                <div class="pay_center_list">
+                   <text class='book-title'>{{chaper_info.title}}</text>
+				   <div class='chapter-coin'>
+					   <text class='text'>{{e18n('info.coin_eve_chapter',{num:chaper_info.price_desc})}}</text>
+					    <image :src="require('../../assets/images/bookbean_icon.png')" style="width: 35rpx; height: 35rpx; margin-left: 10rpx;"></image>
+				   </div>
+                </div>
+                <div class="pay_center_list">
+                    <text  class='chapter-title'>{{e18n('sel_idx',{idx:chaper_info.chap})}}</text>
+                    <text  class='chapter-pey' @click="clickHandle('pchater_clk')" > {{e18n('info.pur_this_chapter')}} </text>
+                </div>
+            </div>
+        </div>
+        <div class="pay_list">
+            <div class="pay_button" @click="clickHandle('vip_clk')" v-if="hasVipOption()" ><text class="text">{{e18n('mine.open_menbers')}}</text></div>
+            <div class="pay_button" @click="clickHandle('rec_clk')"> <text class="text"> {{e18n('info.recharge')}}</text></div>
+        </div>
+		<!-- <div class="pay_list">
+		    <div class="pay_button" @click="$emit('reward_clk')" v-if="hasRewardVideo()" ><text class="text">{{e18n('reward_vieo')}}</text></div>
+		</div> -->
+    </div>
+</template>
+
+<script>
+ 
+	export default {
+		
+        props: {
+            chaper_info: Object,
+        },
+        data() {
+            return {}
+        },
+		methods:{...getApp().globalData.util,
+			clickHandle(type){
+				console.log('pay_clickHandle',type);
+				this.$emit(type)
+			}
+		}
+    }
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+
+    .pay_list {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+         margin: 20rpx;
+        .pay_button{
+			flex:1;
+            background-color: @them;
+            border-radius: 50rpx;
+            align-items: center;
+            justify-content: center;
+			flex-direction: row;
+            margin-left: 20rpx;
+            margin-right: 20rpx;
+			display: flex;
+            .text{
+                padding: 28rpx;
+                text-align: center;
+                font-size: 32rpx;
+                color: @white;
+            }
+        }
+
+    }
+
+
+    .pay_center {
+        padding: 20rpx;
+		width:600rpx;
+        display: flex;
+       align-items: stretch;
+        justify-content: space-between;
+		flex-direction: row;
+        .book_img {
+            width: 100rpx;
+            height: 140rpx;
+            border-radius: 10rpx;
+            margin-right: 20rpx;
+        }
+        
+    .pay_center_right {
+            flex: 1;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: stretch;
+			display: flex;
+            .pay_center_list {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+				flex-direction: row;
+                .book-title{
+             
+                    .txt-lines(1);
+                    font-size: 32rpx;
+                    font-weight: 800;
+                    color: @black2;
+                }
+                .chapter-coin{
+				
+                    padding: 5rpx;
+                    flex-direction: row;
+					display: flex;
+					.text{
+						font-size: 28rpx;
+						color: @grey;
+					}
+                }
+                .chapter-title{
+                    
+                   .txt-lines(1);
+                    font-size: 28rpx;
+                    color: @grey;
+					display: flex;
+                }
+                .chapter-pey{
+					 
+                    font-size: 28rpx;
+                    color: @th-yellow;
+                }
+            }
+    }
+    }
+
+   
+
+    .pay_top {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1rpx solid @white2;
+		flex-direction: row;
+        .text{
+             padding: 30rpx 40rpx;
+            font-size: 36rpx;
+            font-weight: 800;
+            color: @black2;
+        }
+    }
+</style>

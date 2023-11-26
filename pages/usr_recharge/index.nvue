@@ -1,0 +1,311 @@
+<template>
+  <div class="flx-column">
+  <block v-if="!init"><ks-loading-page :vstyle="'background-color:#000000;'"></ks-loading-page></block>
+  <block v-else>
+	  <!-- #ifdef H5 -->
+	  	<ks-h5-navi-title :title="e18n('mine.recharge')"></ks-h5-navi-title>
+	  <!-- #endif -->
+    <div class="flx-column  pd5">
+        <div class="s-top  bg-def pd5">
+              <div class="left">
+				  <image class="image" :src="require('@/assets/images/bookbean_icon.png')" mode="widthFix"></image> 
+				  <text class="text">{{e18n('balance')}}</text>
+				  </div>
+              <div class="right"><text class="text">{{recharge.user_data.coin}}</text></div>
+        </div>
+        <div class="s-body  bg-white pd5">
+          <div class="item" v-for="($item,$idx) in recharge.normal" @click="itemClickHandle($item)">
+            <div class="item-content">
+              <div class="tag" v-if="$item.gift>0"><text class="text">{{e18n('mine.girt_num_coin',{num:$item.gift,coin:coinName(),coin:coinName()})}}</text></div>
+              <text class="coin">￥{{$item.price_desc}}</text>
+              <text class="tip">{{e18n('num_coin',{num:$item.nums,coin:coinName()})}}</text>
+			  <div class="active" v-if="$item.active">
+				   <image :src="require('@/assets/images/active.png')" style="position:absolute;left:auto;top:auto; right:0rpx;bottom:0rpx;width:45rpx;height:45rpx;"></image> 
+				  <!-- <image :src="require('@/assets/images/active.png')"  style="left:auto;top:auto;width:20rpx;height:20rpx;z-index:100;"></image> -->
+				  </div>
+				  
+            </div>
+          </div>
+        </div>
+        <div class="s-attion  bg-white flx-column pd5">
+          <text class="reminder text">{{e18n('reminder')}}</text>
+          <text class=" text">{{e18n('mine.rechange_tip')}}</text>
+        </div>
+    </div>
+	 <ks-poup  direction="bottom" :show_stus="show" @close="show_off_handle" :mask="true">
+		 <div class="s-pay-way">
+		   <div v-if="recharge.wxpay_switch==1" class="div">
+		     <image class="image" :src="require('../../assets/images/upweixin.png')" @click="payClkHandle('weixin')" mode="widthFix"></image>
+		     <text class="text">{{e18n('wechat_payment')}}</text>
+		   </div>
+		   <!-- #ifndef MP-WEIXIN -->
+		 			   <div v-if="recharge.alipay_switch==1" class="div">
+		 				 <image class="image"  :src="require('../../assets/images/upzfb.png')" @click="payClkHandle('zfb')" mode="widthFix"></image>
+		 				 <text class="text">{{e18n('alipay_payment')}}</text>
+		 			   </div>
+		   <!-- #endif -->
+		 </div>
+	 </ks-poup>
+  </block>
+     <ks-message-center :pagename="pagename"></ks-message-center>
+  </div>
+</template>
+
+<script>
+export default {
+  data(){
+	  return {
+		  recharge:null,
+		  cur_item:null,
+		  init:false,
+		  show:false,
+		  exit_time_handle:0,
+		  anid:0,
+		  chaps:0,
+		  return_url:'',
+		  pagename:'usr_recharge',
+	  }
+  },
+  methods:{
+	    ...getApp().globalData.util,
+		
+		itemClickHandle(item){
+		  this.recharge.normal.forEach(element => {
+		    element.active=false;
+		  });
+		  item.active=true;
+		  this.cur_item= item;
+		  this.show=true;
+			//this.$refs.popup.open();
+		  console.log('active',item)
+		},
+		show_off_handle(){
+		    this.show=false;
+			 // this.$refs.popup.close();
+		},
+		 pay_suc_handle(){
+		      console.log('pay_suc_handle')
+		     this.util_toast(this.e18n('pay_success'))
+		     this.exit_time_handle=setTimeout(this.util_router_back,1500);
+		  },
+		pay_err_handle(err){
+		      this.util_toast(this.e18n('pay_faile'))
+		  },
+		  
+		payClkHandle(way){
+			if(!this.isUnloginAble()){
+			          this.util_router_push('pages/usr_login',{path:'pages/usr_recharge',parmas:{anid:this.anid,chaps:this.chaps,return_url:this.return_url}}) // 必须登陆
+			          return;
+			        }
+		    let pay_type={'weixin':1,'zfb':2}[way];
+		    let parmas={
+		                  charge_id: this.cur_item.id,
+		                  pay_type:pay_type,
+		                  scene: 'APP',
+		                  anid:this.anid,
+		                  chap:this.chaps,
+						  quit_url:this.makeLocalUrl('pages/usr_recharge/index'),
+						  return_url:this.makeLocalUrl((this.return_url || 'pages/book_mine')+"/index"),
+		                }
+		    switch(way){
+		      case 'weixin':
+		           parmas.scene=this.getSenceType()||"APP";
+				   console.log('usr_recharge createorder ',parmas);
+		          this.api().createPayOrderWithData(parmas,res=>{
+		             this.wxpay(res,this.pay_suc_handle,this.pay_err_handle);
+		          },err=>{
+					  this.util_toast(err,1500,this.pagename)
+		            console.log('weixin err:',err);
+		          });
+		        break;
+		      case 'zfb':
+		          parmas.scene=this.getSenceType()=='APP'?"APP":"H5";
+				  parmas.deviceInfo=uni.getDeviceInfo();
+		          this.api().createPayOrderWithData(parmas,suc=>{
+		            console.log('alipay suc:',suc);
+		            this.alipay(suc.orderInfo,res=>{
+		              switch(String(res.resultStatus)){
+		                case '9000':
+		                    this.util_toast(this.e18n('pay_success'))
+		                    this.exit_time_handle=setTimeout(this.util_router_back,1500);
+		                  break;
+		                case '6001':
+		                  this.util_toast(this.e18n('pay_faile'))
+		                  break;
+		                default :
+		                    console.log('alipay switch default:',res.resultStatus);
+		                  break;
+		              }
+		                console.log('alipay pay suc:',res.resultStatus,JSON.stringify(res));
+		            })
+		          },error=>{
+		               // this.util_toast(this.e18n('pay_faile'))
+					   this.util_toast(error,1500,this.pagename)
+		              console.log('alipay error:',error);
+		          })
+		        break;
+		    }
+		}
+  },
+  onShow() {
+  	this.getInitDataCb(()=>{
+  		this.api().rechangeBaseInfo(res=>{
+  		    res.normal.forEach(element => {
+  		    element.active=false;
+  		  });
+  		  this.recharge=res
+  		  this.init=true;
+  		  },err=>{console.log('rechangeBaseInfo net err',err)})
+  	})
+  },
+ onLoad(params) {
+    this.anid=params.anid||0;
+    this.chaps=params.chaps ||0;
+    this.return_url=params.return_url || '';
+	this.getInitDataCb(()=>{
+		uni.setNavigationBarTitle({title:this.e18n('mine.recharge')})
+	});
+	
+  },
+  onHide(){
+	  clearTimeout(this.exit_time_handle);
+  }
+}
+</script>
+
+<style lang="less">
+@import './../../assets/styles/style.less';
+page{
+	background-color: @black2;
+}
+.s-pay-way{
+  background-color: @white;
+  justify-content: space-around;
+  padding: 40rpx 80rpx 80rpx 80rpx;
+  display: flex;
+    flex-direction: row;
+  .div{
+    justify-content: space-around;
+    flex-direction: column;
+    align-items: center;
+	display: flex;
+    .image{
+        width: 130rpx;
+		height: 150rpx;
+      }
+    .text{
+      font-size: 28rpx;
+      color: @grey;
+    }
+  }
+  
+}
+.s-attion{
+  .reminder{
+    font-size: 28rpx;
+    color: @grey;
+    font-weight: 800;
+  }
+  .text{
+    font-size: 24rpx;
+    color: @grey2;
+  }
+}
+
+.s-body{
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  display: flex;
+  flex-direction: row;
+  .item{
+        justify-content: stretch;
+        align-items: stretch;
+        flex-wrap: wrap;
+		display: flex;
+		flex-direction: row;
+        margin-bottom: 45rpx;
+		width:300rpx;
+        .item-content{
+            flex-direction: column;
+			display: flex;
+			flex:1;
+            background-color: @white2;
+            border-radius: 15rpx;
+            position: relative;
+            padding: 10rpx;
+            .coin{
+                font-size: 44rpx;
+                color: @black2;
+                font-weight: 800;
+                padding-top: 45rpx;
+                padding-bottom: 20rpx;
+            }
+            .tip{
+                font-size: 28rpx;
+                color: @grey2;
+            }
+            .tag{
+              position: absolute;
+              right: 0rpx;
+              top: 0rpx;
+              background-color: @them;
+              border-top-right-radius: 15rpx;
+              border-bottom-left-radius: 15rpx;
+              .text{
+                font-size: 28rpx;
+                color: @white;
+                padding: 5rpx 20rpx;
+              }
+            }
+			.active {
+			      border-color: @them; 
+			      border-width: 5rpx;
+			      border-radius: 15rpx;
+				  border-style: solid;
+			      position: absolute;
+			      right: 0rpx;
+			      left: 0rpx;
+			      top: 0rpx;
+			      bottom: 0rpx;
+			  }
+      }
+  }
+  
+}
+
+
+.s-top{
+    justify-content: space-between;
+    border-radius: 25rpx;
+    padding: 45rpx 25rpx; 
+    margin-bottom: 15rpx;
+	display: flex;
+	flex-direction: row;
+	height:60rpx;
+    .left{
+      align-items: center;
+	  flex-direction: row;
+	  display: flex;
+      .image{
+        width: 40rpx;
+        margin-right: 10rpx;
+      }
+      .text{
+        font-size: 28rpx;
+        color: @white;
+      }
+    }
+    .right{
+		align-items: center;
+		justify-content: center;
+		flex-direction: row;
+		display: flex;
+      .text{
+        font-size: 48rpx;
+        color: @white;
+        font-weight: 800;
+      }
+    }
+}
+</style>

@@ -1,0 +1,412 @@
+<template>
+ <div class="flx-column bg-black " >
+	<block v-if="!init"><ks-loading-page :vstyle="'background-color:#000000 '"></ks-loading-page></block>
+	  <block v-else>
+		  <!-- :current="current" -->
+		<swiper     :current="1"
+					 @transition="onTransHandle"	 @change="onChangeSwiper"  :style="syncHeightCls" class="bg-black1 " :indicator="false" :circular="true" :vertical="true">
+							<swiper-item  class="flx-column" style="align-items:stretch">
+									<ks-video-player :muted="muted" :vwidth="w_width" :loop="false" :item="item_1" :vstyle="syncHeightCls" @playend="onPlayend"  @toast="onToastHandle"  @subshow="subShowHandle" @toplayer="toPlayerClick" @invita="invitaClick"></ks-video-player>
+							</swiper-item>
+							<swiper-item  class="flx-column" style="align-items:stretch">
+									<ks-video-player :muted="muted" :vwidth="w_width" :loop="false" :item="item_2" :vstyle="syncHeightCls" @playend="onPlayend"  @toast="onToastHandle"  @subshow="subShowHandle" @toplayer="toPlayerClick" @invita="invitaClick"></ks-video-player>
+							</swiper-item>
+							<swiper-item  class="flx-column" style="align-items:stretch">
+									<ks-video-player :muted="muted" :vwidth="w_width" :loop="false" :item="item_3" :vstyle="syncHeightCls" @playend="onPlayend"  @toast="onToastHandle"  @subshow="subShowHandle" @toplayer="toPlayerClick" @invita="invitaClick"></ks-video-player>
+							</swiper-item>
+						</swiper>
+						<div class="cover">
+							<text class="iconfont">{{getSiteName()}}</text>
+						</div>
+		<!--        喜好选择-->
+		<ks-poup direction="bottom" @close="showOffHandle" :show_stus="chaps_show"  :mask="true">
+			<div class="board " v-if="current_sub_tab">
+				<div class="title">
+					<text class="text">{{(currentitem && currentitem.title)||''}} </text> 
+				</div>
+				<div class="tab">
+					<text :class="['txt',(tab==current_sub_tab)?'active':'']" v-for="tab in sub_tabs" @tap.stop="onSubTapHandle($event,tab)">{{tab.title}}</text>
+				</div>
+				<div class="content">
+					<div :class="['item', (Number(sub.chap)== currentitem.last_chap)?'active':'']" v-for="sub in current_sub_tab.subs"  @tap.stop="hobbyClick($event,sub)">
+						<text
+						:class="['txt iconfont', (Number(sub.chap)== currentitem.last_chap)?'active':'']" 
+						>{{(Number(sub.chap)== currentitem.last_chap)?'&#xe60b;':sub.chap}}</text>
+						<text class="lock iconfont" v-if="sub.lock">&#xe609;</text>
+					</div>
+				</div>
+			</div>
+		</ks-poup>
+		<ks-message-center :pagename="pagename" :agree="true"></ks-message-center>	
+	  </block>
+ </div>
+</template>
+
+<script>
+	let interval_handle=0;
+    export default {
+		data(){
+			return {
+                 current:1,
+				 current_step:0,
+				 init:0,
+				 is_show: true,
+				 pagename:'video_recomd',
+				 
+				 w_width:750,
+				 w_height:1280,
+				 videos:[],
+				 item_1:null,
+				 item_2:null,
+				 item_3:null,
+				 currentitem:null,
+				 video_idx:0,
+				 inmoving:false,
+				 inmoving_handle:0,
+				 
+				 chap:1,
+				 chaps_show:false,
+				 current_sub_tab:null,
+				 sub_tabs:[],
+				 muted:false,
+				 start_study_time:0,
+            }
+		},
+		 computed:{
+				syncHeightCls(){
+						return `height:${this.w_height}px;width:${this.w_width}px;`
+				}
+		 },
+		 methods:{
+			  ...getApp().globalData.util,
+			  hobbyClick(e,sub){
+				    e.stopPropagation();
+				  this.showOffHandle();
+				  this.util_router_push('pages/video_player',{course_id:sub.course_id,chap:sub.chap})
+			  },
+			  toPlayerClick(){
+				  this.showOffHandle();
+				  this.util_router_push('pages/video_player',{course_id:this.currentitem.id,chap:this.currentitem.last_chap})
+			  },
+			  invitaClick(){
+				  let txt=this.getShareUrl();
+				  this.setClipBoard(txt,()=>{
+				  	this.util_dialog({message:this.e18n('mine.invite_now_copyed'),pagename:this.pagename});
+				  	uni.hideToast();
+				  })
+			  },
+			  playByIdx(idx){
+				  this.video_idx=idx%this.videos.length;
+				  let tempitem=this.videos[this.video_idx];
+				  switch(this.currentitem){
+						  case this.item_1:
+							  this.item_1 =tempitem;
+							  this.item_2 =null
+							  this.item_3 =null
+						  break;
+						  case this.item_2:
+							  this.item_1 =null
+							  this.item_2 =tempitem;
+							  this.item_3 =null
+						  break;
+						  case this.item_3:
+							  this.item_1 =null
+							  this.item_2 =null
+							  this.item_3 =tempitem;
+						  break;
+						}
+				  this.currentitem=tempitem;
+				  this.playCurrentItem(this.currentitem);
+			  },
+			  onTransHandle(e){
+				  if(this.inmoving) return ;
+				  let dy=e.detail.dy ||0;
+				  if(!!dy) return ;
+				  console.log('onTransHandle',dy)
+				  let tempitem=this.getItemByIdx(this.video_idx+(dy>0?1:-1))
+				  switch(this.currentitem){
+					  case this.item_1:
+						  if(dy>0){
+							if(this.item_2!=tempitem) this.item_2=tempitem;
+						  }else{
+							if(this.item_3!=tempitem) this.item_3=tempitem;
+						  }
+					  break;
+					  case this.item_2:
+							if(dy>0){
+								if(this.item_3!=tempitem) this.item_3=tempitem;
+							}else{
+								if(this.item_1!=tempitem) this.item_1=tempitem;
+							}
+					  break;
+					  case this.item_3:
+							 if(dy>0){
+								if(this.item_1!=tempitem) this.item_1=tempitem;
+							 }else{
+								if(this.item_2!=tempitem) this.item_2=tempitem;
+							}
+					  break;
+				  }
+			  },
+			  
+			  getItemByIdx(tidx){
+				  tidx%=this.videos.length;
+				  if(tidx<0) tidx+=this.videos.length;
+				  return this.videos[tidx];
+			  },
+			  playCurrentItem(item){
+				  console.log('current play vido:',item?item.title:'null');
+				  if(item) item.pstus=1;
+				  this.initItemDatas();
+				  this.api().addHistory(item.id,item.last_chap,res=>{},err=>{});
+				  this.dispatchEvent('play_video_event',item);
+			  },
+			  showOffHandle(){
+				  this.chaps_show=false;
+			  },
+			  subShowHandle(){
+				  this.chaps_show=true; 
+			  },
+			  
+			  onPlayend(e){
+			  	   console.log('onPlayend',e);	
+				    this.playByIdx(this.video_idx+1);
+			  },
+			  onToastHandle(mes,dura=0){
+				  this.util_toast(mes,dura,this.pagename);
+			  },
+			  onChangeSwiper(e) {
+					 let _t_current=this.current%3;
+					 let _d_current= e.detail.current%3;
+					 this.current= e.detail.current;
+					  console.log('swiperchange',_t_current,_d_current, this.current,e.detail.current);
+					 let swp_step=((_d_current-_t_current==1)||(_d_current-_t_current==-2))?1:-1;
+					 let temp_idx = this.video_idx + swp_step;
+					  console.log('swiperchange2',temp_idx);
+					 this.updateVideos(temp_idx);
+			  },
+			  updateVideos(tidx){
+				  if(this.item_1) this.item_1.pstus=0;
+				  if(this.item_2) this.item_2.pstus=0;
+				  if(this.item_3) this.item_3.pstus=0;
+				  tidx%=this.videos.length;
+				  if(tidx<0) tidx+=this.videos.length;
+				  this.video_idx =tidx;
+				  let tempItem=this.videos[this.video_idx];
+				  let item_idx=((this.current%3)+1);
+				  this.currentitem=this['item_'+item_idx]=tempItem;
+				 switch(item_idx){
+					 case 1:
+					  this.item_2=this.item_3=null;
+					 break;
+					 case 2:
+					  this.item_1=this.item_3=null;
+					 break;
+					 case 3:
+					  this.item_1=this.item_2=null;
+					 break;
+				 }
+					
+				 console.log('updateVideos ',tidx,this.current,item_idx,);
+				  this.playCurrentItem(this.currentitem);
+				  
+				  clearTimeout(this.inmoving_handle)
+				  this.inmoving=true;
+				  this.inmoving_handle=setTimeout(()=>{
+				  						  this.inmoving=false;
+				  },500);
+			  },
+			  onSubTapHandle(e,tab){
+			  				  e.stopPropagation();
+			  				  this.current_sub_tab=tab;
+			  },
+			  loadVideos(){
+			  	this.api().recomends(res => {
+										this.init=this.getInitStaus();
+										this.video_idx=0;
+										let tempArr=[];
+										res.forEach((item)=>{
+											item.pstus=0;
+											item.seek=0;
+											item.src=item.file+item.last_chap+'.mp4';
+											tempArr.push(item);
+										})
+										this.videos=tempArr;
+										this.updateVideos(0);
+										setTimeout(()=>{ this.playCurrentItem(this.currentitem);},650)
+										})
+			  },
+			  onItemInfoListener(item){
+				  if(this.videos){
+					 let target =  this.videos.find((sub)=>{
+						  return sub.id==item.id;
+					  });
+					  if(target){
+						  target.is_collected=item.is_collected;
+					  }
+				  }
+			  },
+			  initItemDatas(){
+			  				if(this.currentitem){
+			  					this.api().getSubsInfo(this.currentitem.id,30,res=>{
+			  						this.sub_tabs = res;
+			  						this.current_sub_tab=this.sub_tabs[0];
+			  					})
+			  				}  
+			  },
+		 },
+		 onReady() {
+		 },
+		onDestroy() {
+		  // this.$broadcast('onDestroy')
+		},
+		onShow() {
+			 this.muted = getApp().globalData.muted
+			  console.log('library page show');
+			 if(!!this.currentitem) setTimeout(()=>{this.playCurrentItem(this.currentitem)},250);
+			 this.keeptabBarTxt();
+			 this.start_study_time=this.time();
+		},
+		onHide() {
+		  // console.log('library page hide');
+		   this.dispatchEvent('play_video_event',null);
+		   this.addStudyTime(Math.ceil((this.time()-this.start_study_time)));
+		},
+		onLoad(params) {
+			if(getApp().globalData.muted) this.addEventListener('video_muted_event',()=>{
+				 this.muted = getApp().globalData.muted=false
+				  console.log('video_muted_event false');
+			});
+			this.addEventListener('item_info_event',this.onItemInfoListener);
+			this.getWindowInfo((w)=>{
+				this.w_width=w.windowWidth;
+				this.w_height = w.windowHeight;	
+			})
+			 this.getInitDataCb(()=>{
+				  uni.setNavigationBarTitle({title:this.e18n('recomend') })
+				  this.loadVideos();
+			 })
+		},
+			
+    }
+</script>
+
+<style lang="less" scoped>
+	@import './../../assets/styles/style.less';
+	.cover{
+		position: fixed;
+		left: 0;
+		right: 0;
+		top: 0;
+		display: flex;
+		justify-content: flex-start;
+		align-items: flex-start;
+		/* #ifdef H5*/
+				  margin-top: 25rpx;
+		/* #endif */
+		/* #ifndef H5 */
+			margin-top: 100rpx;
+		/* #endif */
+		.iconfont{
+			padding: 15rpx;
+			font-size: 36rpx;
+			color: @white;
+			font-weight: 600;
+		}
+	}
+	.board{
+	  flex-direction: column;
+	  padding: 0rpx 20rpx;
+	  background-color: @white;
+	   display: flex;
+	   border-top-left-radius: 25rpx;
+	   border-top-right-radius: 25rpx;
+	  
+	  .title{
+	      justify-content: center;
+	      align-items: center;
+			 flex-direction: row;
+	        height: 100rpx;
+			display: flex;
+	      .text{
+	        font-size: 32rpx;
+	        font-weight: 800;
+	        color: @black2;
+	      }
+	      .btn{
+	        position: absolute;
+	        right: 20rpx;
+	        background-color: @them;
+	        padding: 8rpx 20rpx;
+	        color: @white;
+	        border-radius: 10rpx;
+	      }
+	      border-bottom-color: @white3;
+	      border-bottom-width: 1rpx;
+	  }
+		.tab{
+			padding: 15rpx;
+			display: flex;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: flex-start;
+			.txt{
+				font-size: 28rpx;
+				color:  @black3;
+				text-align: center;
+				margin-right: 30rpx;
+			}
+			.active{
+				font-weight: 600;
+				color: @black;
+			}
+		}
+		.content{
+		  background-color: @white;
+		  padding: 20rpx 0rpx;
+		  justify-content: flex-start;
+		  align-items: flex-start;
+		  flex-wrap: wrap;
+		  flex-direction: row;
+		  display: flex;
+		  padding-bottom: 100rpx;
+		  height: 600rpx;
+		  .item{
+		      margin: 12rpx;
+			  background-color: @white2;
+		      align-items: center;
+		      justify-content: center;
+			  display: flex;
+			 .radius-box(15rpx);
+			 width:90rpx;
+			 height: 90rpx;
+			 position: relative;
+			 .txt{
+				 .txt-lines(1);
+				 font-size: 32rpx;
+				 text-align: center;
+				 color: @black2;
+			 }
+			 .lock{
+				 position:absolute;
+				 top:0;
+				 right:0;
+				 background-color: @white3;
+				 padding: 5rpx 10rpx;
+				 color: @grey;
+				 font-size: 24rpx;
+				 border-top-right-radius: 5rpx ;
+				 border-bottom-left-radius: 5rpx;
+			 }
+		  }
+		  .active{
+		      background-color: @orange3;
+			  color: @white;
+			  .txt{
+				   color: @white;
+			  }
+		  }
+		}
+	}
+	
+</style>

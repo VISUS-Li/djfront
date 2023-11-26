@@ -1,0 +1,25 @@
+{
+	"uni-app": {
+		"scripts": {
+			"h5-weixin": {
+				"title": "微信服务号",
+				"browser": "chrome",
+				"env": {
+					"UNI_PLATFORM": "h5"
+				},
+				"define": {
+					"H5-WEIXIN": true
+				}
+			}
+		}
+	},
+	"dependencies": {
+		"@dcloudio/uni-ui": "^1.4.28",
+		"jweixin-module": "^1.6.0",
+		"uni-ui": "^1.0.0"
+	},
+	"devDependencies": {
+		"sass": "^1.69.5",
+		"sass-loader": "^10.1.1"
+	}
+}

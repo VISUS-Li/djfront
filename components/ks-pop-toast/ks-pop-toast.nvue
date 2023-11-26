@@ -1,0 +1,74 @@
+<template>
+ <div class="root">
+	 
+	<uni-transition mode-class="fade" :show="winstus">
+		 <div class="kstoast"><text class="text">{{message}}</text></div>
+	 </uni-transition>
+ </div>
+</template>
+
+<script>
+import EventBus from '@/helper/EventBus.js';
+var eve_handle=0;
+export default {
+  data(){
+    return {
+		winstus:false,
+    }
+  },
+  props:{
+  	  message:'',
+  },
+  computed:{
+	  
+  },
+  methods:{
+	   ...getApp().globalData.util,
+  },
+ created() {
+ 	this.$watch('message',(v1,v2)=>{
+ 		this.winstus=!!v1;
+		if(this.winstus){
+			clearTimeout(eve_handle)
+			eve_handle = setTimeout(()=>{this.$emit('close')},1500);
+		}
+ 		console.log('iwatched toast',this.winstus,v1);
+ 	})
+ }
+}
+</script>
+
+<style lang="less" scoped>
+  @import './../../assets/styles/style.less';
+  .root{
+    position: fixed;
+	display: flex;
+	top:350rpx;
+	left:0;
+	right:0;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	// height: 500rpx;;
+	.kstoast{
+		  background-color: rgba(0, 0, 0, .80);
+		  border-radius: 15rpx;
+		  padding: 25rpx;
+		  display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			min-width: 500rpx;
+			position: relative;
+			.text{
+				 display: flex;
+				 flex: 1;
+				 align-self: center;
+				 text-align: center;
+				 color: @white;
+				 font-size: 28rpx;
+				 font-weight: 600;
+			}
+	}
+  }
+</style>

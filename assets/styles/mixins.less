@@ -1,0 +1,23 @@
+.flex-box-mixins (@column, @justify, @align) {
+  flex-direction: @column;
+  justify-content: @justify;
+  align-items: @align;
+}
+.txt-lines(@line:1){
+	/* #ifdef APP-NVUE */
+		text-overflow: ellipsis;
+		lines:@line;
+	/* #endif */
+	/* #ifndef APP-NVUE */
+		  text-overflow: ellipsis; 
+		  display: -webkit-box;
+		  overflow: hidden;
+		  -webkit-line-clamp: @line;
+		  -webkit-box-orient: vertical;
+		  text-align: justify;
+	/* #endif */
+}
+.radius-box(@round:25rpx){
+	overflow: hidden;
+	border-radius:@round;
+}

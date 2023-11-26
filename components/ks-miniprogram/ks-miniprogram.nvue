@@ -1,0 +1,179 @@
+<template>
+	<div class="warper">
+		<div style="width: 100%; height: 80rpx;"></div>
+		<div class="flx-column pdw5">
+			<swiper circular="true" :indicator-active-color	="'#4D77FD'"  indicator-color="#9c9c9c" indicator-dots='true' indicator-size="15rpx" :autoplay="true" interval="1500" loop="true">
+				<swiper-item class="s-swiper-item" v-for="($item,$index) in guess">
+					<text style="position: absolute; left: 25rpx; top:15rpx; font-size: 35rpx; font-weight: 800; color: #ffffff;z-index: 99;">{{$item.title}}</text>
+					<text style="position: absolute; left: 25rpx; top:80rpx; font-size: 24rpx; color: #ececec;z-index: 100;">{{$item.desc}}</text>
+					<image :src="$item.image" mode="aspectFill" @click="detailTo($item)" style="width: 100%;"></image>
+					<!-- <div style="width: 100%; height: 100%;background-color: aqua;">
+						<image :src="$item.image" mode="aspectFill" @click="detailTo($item)" class="swiimage"></image>
+					</div> -->
+				</swiper-item>
+			</swiper>
+			<div class="pd2"></div>
+			<div class="tab">
+				<text v-for="($item,$index) in tabs" :class="($item==ctab)?'active':''" @click="changeTab($item)">{{$item}}</text>
+			</div>
+			<div class="pd3"></div>
+			<div class="list">
+				<div class="item"  v-for="($item,$index) in list" @click="detailTo($item)">
+					<image :src="$item.image" mode="aspectFill"></image>
+					<div class="right">
+						<text class="title">{{$item.title}}</text>
+						<text class="desc">{{$item.desc}}</text>
+						<div class="lbottom">
+							<text class="b2 " style="font-family:'iconfont';">&#xe63e;{{$item.like}}w</text>
+							<text class="b3"  style="font-family:'iconfont';">&#xe62a;{{$item.assimt}}w</text>
+						</div>
+					</div>
+				</div>
+				<div style="height: 180rpx;"></div>
+			</div>
+		</div>
+		<div style=" background-color: #ececec;    border-top: solid #ececec 1;  padding-top: 20rpx;  padding-bottom: 20rpx; display: flex;flex-direction: row; justify-content: space-between; position: fixed; bottom: 0;left: 0;right: 0;">
+			<div style="flex-direction: column; flex: 1;display: flex; align-items: center;">
+				<image :src="require('@/assets/images/tabBar/tab_icon1_sel.png')" style="width: 60rpx; height: 60rpx; padding-bottom: 10rpx;"></image>
+				<text style="font-size: 28rpx; color:#4D77FD; text-align: center;">课程</text>
+			</div>
+			<div style="flex-direction: column; flex: 1;display: flex;align-items: center;" @click="util_router_push('pages/miniprogram/today',{id:18})">
+				<image :src="require('@/assets/images/tabBar/tab_icon2_def.png')" style="width: 60rpx; height: 60rpx; padding-bottom: 10rpx;" ></image>
+				<text style="font-size: 28rpx; color: #333333; text-align: center;">今日必读</text>
+			</div>
+			<div style="flex-direction: column; flex: 1;display: flex;align-items: center;" @click="util_router_push('pages/miniprogram/mine',{id:18})">
+				<image :src="require('@/assets/images/tabBar/tab_icon3_def.png')" style="width: 60rpx; height: 60rpx; padding-bottom: 10rpx;" ></image>
+				<text style="font-size: 28rpx; color:#333333; text-align: center;">我的</text>
+			</div>
+		</div>
+		<ks-maskloading :uploading="uploading"></ks-maskloading>
+	</div>
+</template>
+
+
+<script>
+	
+	import $pdata from '@/pages/miniprogram/pdata.js';
+	import $utils from '@/helper/utils.js'
+	import ADManager from '@/helper/ADManager.js';
+	export default {
+		name:"ks-miniprogram",
+		data() {
+			return {
+				uploading:false,
+				guess:[],
+				list:[],
+				tabs:["大纲写作","人物描写","心理活动","环境描写"],
+				ctab:'大纲写作',
+			};
+		},
+		methods:{
+			...getApp().globalData.util,
+			detailTo(item){
+				this.uploading=true;
+				ADManager.showReward(()=>{
+					this.uploading=false;
+					console.log('reward complete');
+					this.util_router_push("pages/miniprogram/detail",{id:item.id})
+				},()=>{
+					this.uploading=false;
+					console.log('reward cancel')
+				})
+			},
+			changeTab(type){
+				this.ctab=type;
+				this.list=$pdata.getDataListByType(type);
+			}
+		},
+		created(){
+			this.uploading=false;
+			ADManager.clear();
+			this.changeTab(this.ctab);
+			this.guess=$pdata.getGuess();
+			console.log("guess",this.guess)
+		},
+	}
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+	.warper{
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-start;
+			background-color: @white2;
+			.swiimage{
+				width: 320rpx;
+				height: 320rpx;
+				
+			}
+			.list{
+				display: flex;
+				flex-direction: column;
+				justify-content: flex-start;
+				
+				.item{
+					padding-bottom: 50rpx;
+					display: flex;
+					flex-direction: row;
+					justify-content: space-between;
+					image{
+						width: 180rpx;
+						height: 180rpx;
+						border-radius: 20rpx;
+						padding-right: 15rpx;
+					}
+					.right{
+						
+						flex: 1;
+						display: flex;
+						flex-direction: column;
+						justify-content: flex-start;
+						width: 100%;
+						.title{
+							font-size: 32rpx;
+							font-weight: 800;
+							padding-bottom: 20rpx;
+						}
+						.desc{
+							flex: 3;
+							.txt-lines(2);
+							color: @grey;
+								font-size: 28rpx;
+								height: 35rpx;
+						}
+						.lbottom{
+							display: flex;
+							flex-direction: row;
+							justify-content: space-between;
+							text{
+								color: @grey;
+								font-size: 28rpx;
+								height: 35rpx;
+							}
+							.b2{
+								flex: 1;
+							}
+							.b3{flex:1;text-align: right;}
+						}
+					}
+				}
+			}
+			
+			.tab{
+				display: flex;
+				flex-direction: row;
+				justify-content: space-between;
+				
+				text{
+					font-size: 32rpx;
+					font-weight: 800;
+					color: @black2;
+				}
+				.active{
+					color: @them;
+				}
+			}
+			
+	}
+</style>

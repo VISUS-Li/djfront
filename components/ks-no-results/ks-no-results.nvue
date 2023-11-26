@@ -1,0 +1,27 @@
+<template>
+<div class="no-tip pdw5">
+            <text class="text">{{tips}}</text>
+</div>
+</template>
+
+<script>
+export default {
+		props:{ tips:String},
+}
+</script>
+<style lang="less" scoped>
+	@import './../../assets/styles/style.less';
+	.no-tip{
+	  justify-content: center;
+	  align-items: center;
+	  align-content: center;
+	  display: flex;
+	  min-height: 800rpx;
+	  .text{
+	    font-size: 28rpx;
+	    font-weight: 800;
+	    color: @grey;
+	  }
+	}
+
+</style>

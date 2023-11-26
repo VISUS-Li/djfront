@@ -1,0 +1,36 @@
+<template>
+    <div class="wrapper" :style="vstyle">
+      <text  @click="$emit('left_click')"  :style="vstyle" class="iconfont text"> &#xe672;</text>
+      <text @click="$emit('center_click')" :style="vstyle" class=" text">{{ title }}</text>
+      <text @click="$emit('right_click')"  :style="vstyle" class=" text">{{right}}</text>
+      <!-- {{e18n('home')}} -->
+    </div>
+</template>
+
+<script>
+export default {
+	methods:{...getApp().globalData.util,},
+	  props: {
+		title:'',
+		vstyle:'',
+		right:'',
+	  },
+}
+</script>
+
+<style lang="less">
+   @import url("./../../assets/styles/style.less");
+ 
+.wrapper {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  display: flex;
+  flex:1;
+  height: 85rpx;
+  .text {
+    font-size:32rpx;
+    padding: 20rpx;
+  }
+}
+</style>

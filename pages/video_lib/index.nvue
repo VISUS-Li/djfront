@@ -1,0 +1,364 @@
+<template>
+ <div class="flx-column bg-black ">
+	 <block v-if="init===2">
+	 	  <ks-miniprogram ></ks-miniprogram>
+	 </block>
+	 <block v-if="!init">
+		   <ks-loading-page></ks-loading-page>
+	 </block>
+	 <block v-if="init===1">
+				<div class="tab-bar title-bar bg-black">
+					<text class="site">{{getSiteName()}}</text>
+					<div class="btns" v-if="title_tabs && (title_tabs.length>1)">
+								<div v-for="(tab,idx) in title_tabs"   @click="changeTabHandle(idx)" class="flx-column item">
+										 <text :class="['text',(idx==current)?'txt-active':'']">{{tab.title}}</text>
+										 <div class="tag" v-if="idx==current"></div>
+									</div>
+								<text class="iconfont search" @click.stop="util_router_push('pages/video_search')">&#xe60f;</text>
+					 </div>
+				</div>
+				<swiper :current="current" @change="onChangeSwiper"  :style="syncHeightCls" class="tab-content bg-black1 " :indicator="false">
+					<swiper-item v-for="(c_item,c_idx) in title_tabs"  class="flx-column pdw3 pdh1" style="align-items: stretch"  :show="c_idx==current">
+							 <!-- <div class="pd2"> <ks-search-link ></ks-search-link></div> -->
+						     <div v-for="(sublist,idx) in c_item.course" class="flx-column">
+								 <ks-video-cubbig :item="sublist[0]" @toast="onToastHandle"></ks-video-cubbig>
+								 <div class="pdh2"></div>
+								 <ks-tylist-vm-list :list="sublist.slice(1)"></ks-tylist-vm-list>
+							 </div>
+							 <ks-no-more :loading="!c_item.course.no_more"  :id="'id_more_'+c_idx" :vstyle="'color:#545454'"></ks-no-more>
+					</swiper-item>
+				</swiper>
+	 </block>
+	  <ks-message-center :pagename="pagename" :agree="true"></ks-message-center>
+ </div>
+</template>
+
+<script>
+	let interval_handle=0;
+    export default {
+		data(){
+			return {
+                 current:0,
+                 old:0,
+				 init:0,
+				 title_tabs:null,
+				 title_tabs_pool:null,
+				 title_tabs_slave:null,
+				 height_tabs:[],
+				 is_show: true,
+				 pagename:'video_lib',
+				 videoContext:'',
+				 scroll_time_handle:0,
+				 window_height:1280,
+				 base_top_height:0,//search 88
+				 cub_list_height:1422,
+            }
+		},
+		 computed:{
+				currentItem(){
+					return  this.title_tabs?this.title_tabs[this.current]:0;
+				},
+				oldItem(){
+					return  this.title_tabs?this.title_tabs[this.old]:0;
+				},
+				syncHeightCls(){
+						let h=  this.height_tabs[this.current]?this.height_tabs[this.current].height:15000;
+						console.log('syncHeightCls',this.current,this.height_tabs,h);
+						return `height:${h}rpx;`
+				}
+		 },
+		 methods:{
+			  ...getApp().globalData.util,
+			  onToastHandle(mes,dura=0){
+			  				  this.util_toast(mes,dura,this.pagename);
+			  },
+			  moreClkHandle(item){
+			  	 		this.util_router_push('pages/book_more',{id:item.id})
+			   },
+			  onChangeSwiper(e) {
+			  		 this.swithCurrent(e.detail.current);
+			  },
+			  changeTabHandle(idx){
+			  	this.swithCurrent(idx);
+			  },
+			  swithCurrent(v){
+			  		this.current=v;
+					uni.pageScrollTo({scrollTop:0,duration:0})
+			  		this.loopadd();
+					this.toScrollHandle(0);
+			  },
+			  dot_pool(){
+			  	this.init=0;
+			  	clearInterval(interval_handle);
+			  	if(!this.title_tabs_pool){
+			  		this.loadChanel();
+			  		return;
+			  	}
+			  	this.title_tabs.forEach(v=>{v.course=[];v.course.no_more=false});
+			  	this.title_tabs_slave= this.deep_copy(this.title_tabs_pool) ; 
+			  	this.loopadd();
+				this.toScrollHandle(0);
+			  	this.init=this.getInitStaus();
+				if(this.init==1){
+					setTimeout(()=>{this.firstHandle(this.pagename)},1500);
+				}
+			  },
+			  loopadd(){
+					clearInterval(interval_handle);
+			  		let curretn_tabitems = 	this.title_tabs_slave[this.current];
+			  		let pitem=curretn_tabitems.splice(0,7);
+			  		let temp_tabs = this.deep_copy(this.title_tabs);
+			  		let list = temp_tabs[this.current].course;
+			  		if(pitem && pitem.length>0) {
+			  			list.push(pitem)
+			  			let tempheight= this.deep_copy(this.height_tabs);
+			  			tempheight[this.current]=this.compu_heights(temp_tabs,this.current);
+			  			this.height_tabs=tempheight;
+			  		}else{
+			  			list.no_more=true;
+			  		}
+			  		this.title_tabs[this.current].course=list;
+					if(pitem) this.check_full_screen();
+			  },
+			  check_full_screen(){
+				interval_handle =  setTimeout(()=>{
+					  const query = uni.createSelectorQuery().in(this);
+					  query.select('#id_more_'+this.current).boundingClientRect(data => {
+					    console.log("得到布局位置信息" + JSON.stringify(data));
+						if(data){
+							let tempHeight=this.windowHeight - data.top;
+							console.log("检查加载位置信息 1" , this.windowHeight,data.top,tempHeight);
+							if(tempHeight>0) {
+								 console.log("检查加载位置信息 2" + JSON.stringify(data));
+								 this.loopadd();
+							}
+						}
+					  }).exec();
+				  },350)
+				  
+			  },
+			  compu_heights(arr,index){
+			  			let cutab = arr[index];
+			  			let list=cutab.course;
+			  			let info={height:this.base_top_height,graphy:[]};
+						info.height+=200;// no-more space
+						// if(cutab.type==1){  //标准模式下 会有轮播图和 搜索框
+						// 	info.height+=300// menlist ;
+						// 	let topcub=[340,300][cutab.type];
+						// 	info.height+=list.recomend?topcub:0;//gusslike space
+						// }
+			  			list.forEach((item,idx) => {
+							let  cub_height=0;
+							switch(item.length){
+								case 1:
+								cub_height=578;
+								break;
+								case 2:
+								case 3:
+								case 4:
+								cub_height=998;
+								break;
+								case 5:
+								case 6:
+								case 7:
+								cub_height=this.cub_list_height;
+								break;
+							}
+			  				info.height+=cub_height;
+			  			});
+			  		return info;
+			  },
+			  loadChanel(){
+			  	this.api().courseList(res => {
+											this.title_tabs_pool=[];
+											res.forEach((v,index)=>{
+												this.title_tabs_pool[index]= res[index].course.splice(0);
+											})
+											this.title_tabs=res;
+											this.dot_pool();
+										})
+			  },
+			  toScrollHandle(px){
+				  clearTimeout(this.scroll_time_handle);
+				  this.scroll_time_handle = setTimeout(()=>{this.scrollEndHandle(px)},500);
+			  },
+			 
+			  scrollEndHandle(px){
+				  let tpx=px-this.base_top_height/2;//-top height,rpx to px;
+				  tpx -= 550/4;// cubplayer half
+				  let cub=false;
+				  if(tpx<0){
+					   console.log('scrollEndHandle1',px,tpx)
+					  cub = this.title_tabs[this.current].course[0];
+				  }else{
+					  let cub_list_heigt_px = (this.cub_list_height/2);// rpx 2 px
+					  let init_step=Math.ceil(tpx/cub_list_heigt_px);
+					  let remainder = tpx%cub_list_heigt_px;
+					  let twindow_height=this.window_height-52;//tab bar height
+					  console.log('scrollEndHandle2',px,tpx,init_step,remainder,(cub_list_heigt_px-twindow_height),cub_list_heigt_px,twindow_height)
+					  if(remainder>(cub_list_heigt_px-twindow_height)){
+						   cub = this.title_tabs[this.current].course[init_step];
+					  }
+				  }
+				  if(cub){
+					   this.dispatchEvent('lib_video_event', cub[0]);
+				  }else{
+					   this.dispatchEvent('lib_video_event', null);
+				  }
+			  },
+			  onItemInfoListener(item){
+								let tabs=this.title_tabs;
+								if(tabs){
+									tabs.forEach(v=>{
+										 let list =  v.course;
+										 list.forEach(cub=>{
+											 let target =cub.find((sub)=>{
+												  return sub.id==item.id;
+											 });
+											 if(target){
+												target.is_collected=item.is_collected;
+											 }
+										 })
+									})
+								}
+								
+								tabs=this.title_tabs_pool;
+								if(tabs){
+									tabs.forEach(v=>{
+										 let target =v.find((sub)=>{
+											  return sub.id==item.id;
+										 });
+										 if(target){
+											  target.is_collected=item.is_collected;
+										 }
+									})
+								}
+			  },
+		 },
+		 onReady() {
+		 
+		 },
+		 
+			onDestroy() {
+			  // this.$broadcast('onDestroy')
+			},
+			onHide() {
+			  console.log('library page hide');
+			  //this.$broadcast('onHide')
+			// clearInterval(interval_handle);
+			   this.dispatchEvent('lib_video_event', null);
+			},
+			onShow() {
+			    console.log('library page show');
+				//this.$broadcast('onShow')
+				 this.keeptabBarTxt();
+				if(this.init) this.dot_pool();
+			},
+			onReachBottom() {
+					console.log('onReachBottom');
+					this.loopadd();
+			},
+			onPageScroll(e){
+				// console.log("滚动距离为：" + e.scrollTop);
+				this.toScrollHandle(e.scrollTop);
+			},
+			created(){
+				this.getWindowInfo((w)=>{
+								 this.window_height=w.windowHeight
+								 });
+			},
+			onLoad(params) {
+				 console.log('library page init');
+				 this.addEventListener('item_info_event',this.onItemInfoListener);
+				 this.getInitDataCb(()=>{
+					 uni.setNavigationBarTitle({title:this.e18n('library') })
+					 this.loadChanel();
+				 })
+			},
+			
+    }
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+	page{
+		background-color:@black1;
+	}
+	.tab-bar{
+					//border-bottom-width: 1rpx;
+					//border-bottom-color: @white3;
+					justify-content: flex-start;
+					align-items: flex-start;
+					display: flex;
+					flex-direction: column;
+					padding-left: 25rpx;
+					padding-right: 25rpx;
+					padding-bottom: 10rpx;
+					position: sticky;
+					top:0;
+					z-index: 300;
+					.site{
+						margin: 20rpx 0rpx 20rpx 0rpx;
+						font-size: 34rpx;
+						font-weight: 600;
+						color: @white3;
+					}
+					.btns{
+						align-self: stretch;
+						justify-content: flex-start;
+						align-items: center;
+						display: flex;
+						flex-direction: row;
+						position: relative;
+						.item{
+							flex-direction: column;
+							justify-content: center;
+							align-items: center;
+							align-content: center;
+							margin-right: 30rpx;
+							display: flex;
+							.tag{
+								margin-top: 8rpx;
+								background-color:  @orange;
+								border-radius: 15rpx;
+								height: 10rpx;
+								width: 35rpx;
+								justify-content: center;
+								align-items: center;
+								display: flex;
+								// border-bottom: 5rpx @them;
+							}
+							.text{
+								font-size: 30rpx;
+								font-weight: 800;
+								color: @black3;
+							}
+							.txt-active{
+								font-size: 30rpx;
+								color:  @white;
+								font-weight: 800;
+							}
+							
+						}
+						.search{
+							    font-size: 38rpx;
+							    color:@black3;
+								text-align: right;
+							    position: absolute;
+								padding-right: 10rpx;
+							    right: 0rpx;
+								width: 100rpx;
+								background-color: @white;
+								.radius-box(25rpx)
+						}
+					}
+					
+				}
+	.tab-content{
+		margin-top: 10rpx;
+		
+		.typography{
+			border-radius: 20rpx;
+		}
+	}
+</style>

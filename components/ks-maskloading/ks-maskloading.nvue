@@ -1,0 +1,53 @@
+<template>
+	<view>
+		<uni-transition mode-class="fade" :duration="450" :show="uploading"  :styles="{'zIndex':1004}">
+			<div style="position: fixed;inset: 0; display: flex;justify-content: center;align-items: center;">
+				<div class="uploading">
+					<image class="image" :src="require('@/assets/images/loading4.gif')" ></image>
+					<text class="text">{{e18n("uploading")}}</text>
+				</div>
+			</div>
+		</uni-transition>
+	</view>
+</template>
+
+<script>
+	
+	export default {
+		name:"ks-maskloading",
+		props:{
+			uploading:{
+				type:Boolean,
+				default:false,
+			}
+		},
+		data() {
+			return {
+				
+			};
+		},
+		methods:{
+			...getApp().globalData.util
+		}
+	}
+</script>
+
+<style lang="less" scoped>
+	@import './../../assets/styles/style.less';
+	.uploading{
+		display: flex; 
+		flex-direction: column; 
+		justify-content: center;
+		align-items: center;
+		background-color: rgba(0, 0, 0, 0.45); 
+		width: 400rpx;
+		height: 400rpx;
+		border-radius: 50rpx;
+		.image{
+			width: 40rpx;height: 100rpx;
+		}
+		.text{
+			font-size: 28rpx;color: @white; margin-top: 25rpx;
+		}
+	}
+</style>

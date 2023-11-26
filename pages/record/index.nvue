@@ -1,0 +1,93 @@
+<template>
+  <div class="flx-column">
+     <block v-if="!init"><ks-loading-page :vstyle="'background-color:#000000 '"></ks-loading-page></block>
+     <block v-else>
+		 <!-- #ifdef H5 -->
+		 	<ks-h5-navi-title :title="e18n('mine.reading_records')"></ks-h5-navi-title>
+		 <!-- #endif -->
+        <block v-if=" (list && list.length>0)">
+			<div class="flx-column bg-black2 pdw5">
+				<div  v-for="(sub_item,sub_idx) in list" class="pdh2">
+					<ks-tybook-hm-item  :item="sub_item" cto="reading" :last="true"></ks-tybook-hm-item>
+				</div>
+				<div class="w100"><ks-no-more :loading="!no_more" :vstyle="'color:#545454'"></ks-no-more></div>
+			</div>     
+		 </block>
+        <block v-else>
+		  <ks-no-results :tips="e18n('mine.no_records_tip')" @click="goreadingHandle"></ks-no-results>
+        </block>
+     </block>
+	 <ks-message-center :pagename="pagename"></ks-message-center>
+  </div>
+</template>
+
+<script>
+export default {
+  data(){
+	  return  {
+				init:false,
+				page:1,  //第几页 从 1开始
+				pageSize:50,  //第几页 从 1开始
+				loading:false,
+				pagename:'record',
+				list:[],
+				no_more:false,
+				scroll_height:0,
+			  }
+  },
+  methods:{
+	  ...getApp().globalData.util,
+	  scrollBtmHandle(){
+	      this.page++;
+	      this.loading=true;
+	      this.api().getHistory(this.page,this.pageSize,(res)=>{
+	                    this.list=[...this.list,...res.list];
+	                    this.loading=false;
+	                    this.no_more=(res.list.length < this.pageSize);
+	                    this.init=true;
+	                })
+	  },
+	  goreadingHandle(){
+	    this.util_router_push('pages/video_lib');
+	  },
+  },
+  onReachBottom() {
+		console.log('onReachBottom')
+  		if(!this.no_more) this.scrollBtmHandle();
+  },
+
+	onLoad(params) {
+		  this.getInitDataCb(()=>{
+			  uni.setNavigationBarTitle({
+			  			title: this.e18n('mine.reading_records')
+			  })
+		  });
+		  
+	  },
+  onShow() {
+	  
+	  this.getInitDataCb(()=>{
+		  if(!this.isUnloginAble()){
+		       this.util_router_replace('pages/usr_login',{path:'pages/record'}) // 必须登陆
+		       return;
+		  }else{
+		    this.page=0;
+		    this.list=[];
+		    this.scrollBtmHandle();
+		  }
+	  })
+  },
+  onHide() {
+  }
+}
+</script>
+
+<style lang="less">
+	@import './../../assets/styles/style.less';
+	/* #ifdef H5 */
+	page{
+			background-color: @black2;
+		}
+	/* #endif */
+
+</style>

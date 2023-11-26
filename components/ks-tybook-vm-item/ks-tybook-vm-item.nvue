@@ -1,0 +1,232 @@
+<template>
+    <div class="vmroot">
+		<div v-if="!item.isadd" class="book-container"  @tap.stop="click_handle" >
+			<div class="book-box" >
+				<image :src="item.picture" class="book-img" alt="../../assets/images/book_cover_def.png"></image>
+				<div v-if="item.isvip" class="vip-tag"></div>
+				<div class="tag" v-if="item.tag"><text class="text">{{item.tag}}</text></div>
+				
+				<div  class="reading-progress">
+					<text class="themal iconfont" >{{formatBookHots(item.learn_sum)}}&#xe63e;</text>
+					<text class="last" v-if="item.in_case">{{e18n('has_read_chaps',{num:item.last_chap})}}</text></div>
+				<div @tap.stop="onDelClick"  class="del-btn" v-if="item.showdel || isDel">
+					<image class="image" :src="require('../../assets/images/del_btn.png')"></image>
+				</div>
+			</div>
+			<div :class="txtbgColor?'s-strok book-titles':'book-titles'"> <text class="book-titles-text">{{item.title}}</text></div>
+			<div :class="txtbgColor?'s-strok book-author':'book-author'"> <text class="book-author-text">{{ (item.cate_desc && item.cate_desc.join(' '))||"重生 逆袭"}}</text> </div>
+		</div>
+		<div v-else class="s-add-btn"  @tap.stop="onAddClick">
+			<image class="image" :src="require('../../assets/images/bookshelf_add.png')"></image>
+		</div>
+    </div>
+</template>
+
+<script>
+	import EventBus from '@/helper/EventBus.js';
+    export default {
+        props:{
+			 cto:{
+				type:String,
+				default:'detail',
+			},
+            item:Object,
+			txtbgColor:String,
+        },
+		data(){
+			return {
+				isDel:false,
+			//	showdel:this.item.showdel
+			}
+		},
+		computed:{
+			showdel(){
+				return this.item.showdel;
+			}
+		},
+		watch:{
+			item:{
+				handler(n,o){
+					//console.log(' i watch er778',n,o);
+				},
+				deep:true,
+				immediate: true,
+			}
+		},
+		created(){
+			console.log(this.item);
+			this.addEventListener(EventBus.EVE_BOOKSHELF,(stus)=>{
+					console.log('addEventListener 1',stus);
+					this.isDel=stus;
+				//if(this.item) this.item.showdel=stus;
+			})
+		},
+		methods:{
+				...getApp().globalData.util,
+				onDelClick(e){
+					e.stopPropagation();
+					this.$emit('del')
+				},
+				onAddClick(e){
+					e.stopPropagation();
+					this.$emit('add')
+				},
+				click_handle(e) {
+					e.stopPropagation();
+				   this.util_router_push('pages/video_player',{course_id:this.item.id,chap:this.item.last_chap})
+				},
+		},
+    }
+</script>
+
+<style lang="less" scoped>
+    @import url("./../../assets/styles/style.less");
+	
+    .vmroot{
+        position: relative;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+		align-items: flex-start;
+		height: 400rpx;
+		width: 220rpx;
+		
+		.book-container{
+			display: flex;
+			width: 220rpx;
+			flex-direction: column;
+			justify-content: flex-start;
+			align-items: flex-start;
+			.book-box{
+				position: relative;
+				 .book-img {
+					width: 220rpx;
+					height: 300rpx;
+					border-radius: 15rpx;
+				}
+				
+				.tag {
+						position: absolute;
+						left: 0rpx;
+						top: 0rpx;
+					
+						justify-content: center;
+						align-items: center;
+						border-top-left-radius: 15rpx;
+						border-bottom-right-radius: 15rpx;
+					
+						background-color: @orange;
+						display: flex;
+						.text{
+								padding: 2rpx 18rpx;
+								font-size:26rpx;
+								color: @white;
+								text-align: center;
+						}
+					}
+			
+				.vip-tag{
+					position: absolute;
+					right: 0;
+					top: 0;
+					width: 80rpx;
+					height: 80rpx;
+					background-image: url('../../assets/images/vip_tag.png');
+					/* 等比例缩放背景图片到宽度为组件宽的一半 */
+					background-size: 100%;
+					/* 在水平方向和竖直方向上重复绘制 */
+					background-repeat: no-repeat;
+					/* 背景图片处于组件中央 */
+					background-position: center;
+				}
+			
+				.del-btn{
+					position: absolute;
+					left: 0rpx;
+					right: 0rpx;
+					top:0rpx;
+					bottom: 0rpx;
+					background-color: rgba(0, 0, 0, 0.35);
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					.image{
+						width: 50rpx;
+						height: 50rpx;
+					}
+				}
+			
+				.reading-progress{
+					position: absolute;
+					background-color: rgba(0, 0, 0, .65);
+					left:0;
+					right:0;
+					bottom: 6rpx;
+				   .radius-box(5rpx);
+					display: flex;
+					flex-direction: column;
+					align-items: flex-end;
+					.themal{
+						
+						text-align: right;
+						font-size:24rpx;
+						padding: 5rpx;
+						color: @orange;
+						font-weight: 600;
+						//background-color: rgba(0, 0, 0, .45);
+						width: 220rpx;
+					}
+					
+					.last{
+						font-size:24rpx;
+						color: @white3;
+						padding: 5rpx 10rpx;
+					}
+				}
+			}
+			.book-titles-text {
+			    font-size: 28rpx;
+				font-weight: 600;
+			    color: @white;
+			    width: 220rpx;
+				.txt-lines(1);
+				text-align: left;
+			}
+			
+			.book-author-text{
+				font-size: 24rpx;
+				color:@white3;
+				width: 220rpx;
+				padding-top: 10rpx;
+				padding-bottom: 2rpx;
+				
+				text-overflow: ellipsis;
+				overflow: hidden;
+				.txt-lines(1);
+				word-break: break-all;
+				text-align: left;
+				
+			}
+		}
+		.s-add-btn{
+		width: 220rpx;
+		height: 300rpx;
+			border-radius: 15rpx;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background-color: @white2;
+			.image{
+				width: 60rpx;
+				height: 60rpx;
+			}
+		}
+	}
+	
+	
+	.s-strok{
+			padding: 6rpx 10rpx;
+			background-color: rgba(255, 255, 255, .35);
+			border-radius: 10rpx;
+		}
+</style>

@@ -1,0 +1,379 @@
+<template>
+  <div class="flx-column  bg-white" >
+    <block v-if="!init">
+         <ks-loading-page></ks-loading-page>
+    </block>
+    <block v-else>
+      <div  class="flx-column  bg-white">
+        <div class="title-bar  bg-def"> </div>
+         <div class="pd5  s-top bg-def">  
+              <div class="left" @click="loginHandle">
+                <image :src="user_info.avatar"></image>
+              </div>
+              <div class="mid"> <text class="name" @click="loginHandle"> {{user_info.nickname || e18n('mine.un_logined')}}</text> <text class="rid"> ID:{{user_info.rid}}</text></div>
+              <div class="right"><text class="time">{{read_time || 0}}{{e18n('minute')}}</text><text class="desc">{{e18n('mine.reading_time_today')}}</text></div>
+         </div>
+         <div class="pdw5 flx-column  bg-def">
+            <div class="pd1"></div>
+            <div class="s-wallet" @click="walletClkHandle"> 
+                <div class="tag"><text>{{e18n('mine.my_wallet')}}</text></div>
+                  <div class="left">
+                      <text class="num">{{base_info.coin ||'0'}} </text>
+                      <text class="desc">{{e18n('balance')}} </text>
+                  </div>
+                  <div class="mid">
+                      <text class="num"> {{base_info.today_coin || '0'}}</text>
+                      <text class="desc">{{e18n('mine.today_coin',{coin:coinName()})}} </text>
+                  </div>
+                  <div class="right">
+                    <text>{{e18n('mine.recharge_now')}}</text>
+                  </div>
+              </div>
+            <div class="pd1"></div>
+            <!-- <div class="s-vip" v-if="hasvip" @click="vipClkHandle" :style="'background-image: url(' + require('@/assets/images/vip_center_bg.png') + ')'">
+               <div class="left">
+                <image :src="require('@/assets/images/vip_tit_img.png')" ></image>
+                <text class="desc" >{{user_info.viptime? e18n('mine.vip_expires_attion',{time:user_info.viptime}):e18n('mine.vip_benefits')}}</text>
+                </div>
+                <div class="right"><text>{{user_info.is_vip=='1'? e18n('mine.vip_club'):e18n('to_open')}}</text></div>
+            </div> -->
+            <div class="pd2"></div>
+         </div>
+         <div class="bg-def w100"><div class="s-panle-hat" ></div></div>
+         <div class=" pd5 flx-column s-but-list">
+            <div v-for="(pitem,pidx ) in item_list"  @click="tabClkHandle(pitem)" class="tab-button" v-if="pitem.id!=3 && pitem.id!=4 && pitem.id!=2">
+                 <div class="left" v-if="pitem.id!=3 && pitem.id!=4">
+                     <image :src="pitem.icon"></image>
+                     <text>{{pitem.name}}</text>
+                  </div>
+                  <image :src="require('@/assets/images/arrow-right.png')" v-if="pitem.id!=3 && pitem.id!=4"></image>
+            </div>
+             <div class="s-exit" v-if="user_info.nickname" @click="logoutHandle"><text><span class="iconfont">&#xe619; </span>{{e18n('logout')}}</text></div>
+         </div>
+        <div class="tabbar-height"></div>
+      </div>
+	
+	<div style=" background-color: #ececec;    border-top: solid #ececec 1;  padding-top: 20rpx;  padding-bottom: 20rpx; display: flex;flex-direction: row; justify-content: space-between; position: fixed; bottom: 0;left: 0;right: 0;">
+		<div style="flex-direction: column; flex: 1;display: flex; align-items: center;" @click="util_router_push('pages/miniprogram/index',{id:18})">
+			<image :src="require('@/assets/images/tabBar/tab_icon1_def.png')" style="width: 60rpx; height: 60rpx; padding-bottom: 10rpx;"></image>
+			<text style="font-size: 28rpx; color:#333333; text-align: center;">课程</text>
+		</div>
+		<div style="flex-direction: column; flex: 1;display: flex;align-items: center;" @click="util_router_push('pages/miniprogram/today',{id:18})">
+			<image :src="require('@/assets/images/tabBar/tab_icon2_def.png')" style="width: 60rpx; height: 60rpx; padding-bottom: 10rpx;" ></image>
+			<text style="font-size: 28rpx; color: #333333; text-align: center;">今日必读</text>
+		</div>
+		<div style="flex-direction: column; flex: 1;display: flex;align-items: center;" >
+			<image :src="require('@/assets/images/tabBar/tab_icon3_sel.png')" style="width: 60rpx; height: 60rpx; padding-bottom: 10rpx;" ></image>
+			<text style="font-size: 28rpx; color:#4D77FD; text-align: center;">我的</text>
+		</div>
+	</div>
+    </block>
+  </div>
+</template>
+<script>
+
+export default {
+
+  data(){
+	  return  {
+			user_info:null,
+			base_info:null,
+			item_list:null,
+			init:false,
+		  }
+  },
+  methods:{
+	    ...getApp().globalData.util,
+		refreshMyinfo(){
+		  console.log('refreshMyinfo 1');
+		  this.user_info=this.getUserinfo();
+		  this.refreshBaseInfo();
+		},
+		
+		walletClkHandle(){
+		  this.util_router_push('pages/usr_recharge');
+		},
+		vipClkHandle(){
+		  this.util_router_push('pages/usr_vip');
+		},
+		tabClkHandle(item){
+		    let path="pages"+((item.path=='/wtr_auth')?'/writer':item.path);
+		    let query = item.query;
+		    console.log('push :',path);
+		    this.util_router_push(path,query);
+		},
+		
+		refreshBaseInfo(){
+		  console.log('refreshBaseInfo')
+		  this.api().userBaseinfo(res=>{
+		    this.item_list=[...res.list[0],...res.list[1]]
+		    this.base_info=res;
+		    this.init=true;
+		    console.log('base lists ',this.base_info,this.user_info);
+		  })
+		},
+		loginHandle(){
+		  if(this.user_info.nickname) return;
+		    this.util_router_push('pages/usr_login')
+		},
+		logoutHandle(){
+		    this.util_dialog({
+							message:this.e18n('logout_warn'),
+							buttons:[{text:this.e18n('sure')},{text:this.e18n('cancel')}],
+							success:(res)=>{
+								// if(!res.confirm)	return ;
+								this.loginOut();
+								this.refreshMyinfo();
+							}
+						})
+		},
+  },
+		// {"status":"1","code":200,"data":{"coin":1420,"today_read_time":0,"year":"2022","m":"\u5341\u4e00\u6708","d":"01","w":"\u5468\u4e8c","sign_total_coin":720,"watch_video_coin":"30","watch_video_times":1,"interact_config":[{"thumb":"http:\/\/novel.kiseng.vip\/storage\/assets\/imgs\/weafare_ad.png","title":"\u770b\u5e7f\u544a\u9001\u6a59\u5e01","coin":"30","times":1},{"thumb":"http:\/\/novel.kiseng.vip\/storage\/assets\/imgs\/weafare_invot.png","title":"\u9080\u8bf7\u597d\u53cb\u9001\u6a59\u5e01","times":"http:\/\/novel.kiseng.vip\/gzh\/#\/invitation?user_id=4","coin":"300"}],"sign_config":[{"id":1,"title":"\u5468\u4e00","coin":30,"desc":"\u83b7\u5f9730\u61cb\u5e01","created_at":null,"updated_at":"2021-07-29 15:38:24","is_type":0},{"id":2,"title":"\u5468\u4e8c","coin":60,"desc":"\u83b7\u5f9760\u61cb\u5e01","created_at":null,"updated_at":"2021-07-29 15:38:33","is_type":2},{"id":3,"title":"\u5468\u4e09","coin":80,"desc":"\u83b7\u5f9780\u61cb\u5e01","created_at":null,"updated_at":"2021-07-29 15:38:55","is_type":2},{"id":4,"title":"\u5468\u56db","coin":100,"desc":"\u83b7\u5f97100\u61cb\u5e01","created_at":null,"updated_at":"2021-07-29 15:39:10","is_type":2},{"id":5,"title":"\u5468\u4e94","coin":120,"desc":"\u83b7\u5f97120\u61cb\u5e01","created_at":null,"updated_at":"2021-07-29 15:39:28","is_type":2},{"id":6,"title":"\u5468\u516d","coin":150,"desc":"\u83b7\u5f97150\u61cb\u5e01","created_at":null,"updated_at":"2021-07-29 15:39:42","is_type":2},{"id":7,"title":"\u5468\u65e5","coin":180,"desc":"\u83b7\u5f97180\u61cb\u5e01","created_at":null,"updated_at":"2021-07-29 15:40:00","is_type":2}],"daily_read_config":[{"id":1,"key":"30\u5206\u949f","coin":60,"delete_time":null,"created_at":null,"updated_at":"2021-07-29 17:34:09","time":1800,"status":"0"},{"id":2,"key":"60\u5206\u949f","coin":120,"delete_time":null,"created_at":null,"updated_at":"2021-07-29 17:34:16","time":3600,"status":"0"},{"id":3,"key":"90\u5206\u949f","coin":150,"delete_time":null,"created_at":null,"updated_at":"2021-07-29 17:34:22","time":5400,"status":"0"},{"id":4,"key":"120\u5206\u949f","coin":210,"delete_time":null,"created_at":null,"updated_at":"2021-07-29 17:34:34","time":7200,"status":"0"},{"id":5,"key":"150\u5206\u949f","coin":240,"delete_time":null,"created_at":null,"updated_at":"2021-07-29 17:34:42","time":9000,"status":"0"},{"id":6,"key":"180\u5206\u949f","coin":300,"delete_time":null,"created_at":null,"updated_at":"2021-07-29 17:34:49","time":10800,"status":"0"},{"id":8,"key":"210\u5206\u949f","coin":390,"delete_time":null,"created_at":null,"updated_at":"2021-12-04 23:48:11","time":12600,"status":"0"},{"id":13,"key":"10\u5206\u949f","coin":30,"delete_time":null,"created_at":"2020-07-20 08:42:15","updated_at":"2021-07-29 17:30:26","time":600,"status":"0"}]},"debug":{"data":""}}
+  onShow() {
+	console.log('mine  on show')
+     this.getInitDataCb(this.refreshMyinfo)
+  },
+
+  computed:{
+    hasvip(){
+		console.log('hasvip',this.hasVipOption())
+        return  this.hasVipOption();
+    },
+    read_time(){
+      if(this.base_info) return this.base_info.read_time;
+      return 0;
+    }
+  },
+
+}
+</script>
+
+<style lang="less">
+	@import './../../../assets/styles/style.less';
+	page{
+		background-color: @white;
+	}
+  .s-exit{
+    justify-content: center;
+    align-items: center;
+	display: flex;
+    text{
+      font-size: 28rpx;
+      font-weight: 800;
+      color: @grey;
+    }
+  }
+  .s-but-list{
+      .tab-button{
+        justify-content: space-between;
+        align-items: flex-start;
+		display: flex;
+        image {
+          width: 35rpx;
+          height: 35rpx;
+        }
+        .left{
+          image{
+             margin-right: 30rpx;
+          }
+        }
+        padding-bottom: 60rpx;
+        text{
+          font-size: 32rpx;
+          font-weight: 800;
+          color: @black2;
+        }
+      }
+
+  }
+  .s-panle-hat{
+    width: 100%;
+    background-color: @white;
+    border-top-left-radius: 25rpx;
+    border-top-right-radius: 25rpx;
+    height: 25rpx;
+  }
+.s-vip{
+    height: 110rpx;
+    padding: 20rpx 40rpx;
+    background-image: url("@/assets/images/vip_center_bg.png");
+    background-size: cover;
+    align-items: center;
+    justify-content: space-between;
+	display: flex;
+
+    .left{
+      flex-direction: column;
+      justify-content: space-around;
+	  display: flex;
+      image{
+        height: 40rpx;
+		width: 100%;
+      }
+      text{
+        color: #EBD8B4;
+        font-size: 28rpx;
+        font-weight: 800;
+      }
+    }
+    .right{
+      text{
+        background-color: #EBD8B4;
+        border-top-left-radius:  20rpx;
+        border-top-right-radius: 20rpx;
+        border-bottom-left-radius: 20rpx;
+        border-bottom-right-radius: 20rpx;
+        padding: 10rpx 20rpx;
+        font-size: 28rpx;
+        color: @black;
+      }
+    }
+
+}
+.s-top{
+	display: flex;
+	
+  
+  .left{
+    width: 17%;
+    image {
+      width: 100%;
+      height: 120rpx;
+      background-image: url('@/assets/images/set_def_tx.png');
+      background-repeat: no-repeat;
+      background-size: cover ;
+      background-position: center;
+      border-top-left-radius:  50%;
+      border-top-right-radius: 50%;
+      border-bottom-left-radius: 50%;
+      border-bottom-right-radius: 50%;
+    }
+  }
+  .mid{
+    padding-left: 20rpx;
+    width: 58%;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: flex-start;
+	display: flex;
+
+    .name{
+      width: 100%;
+      font-size: 40rpx;
+      font-weight: 800;
+      color: @white;
+      .txt-lines(1);
+    }
+    .rid{
+      font-size: 28rpx;
+      color:@white;
+    }
+  }
+  .right{
+    width: 25%;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: flex-end;
+	display: flex;
+    .time{
+      font-size: 28rpx;
+      font-weight: 800;
+      color: @white;
+    }
+    .desc{
+      font-size: 28rpx;
+      color:@white;
+    }
+  }
+}
+
+.s-wallet{
+  background-color: @grey;
+  display: flex;
+  position: relative;
+
+  /* background-image: url('../../assets/images/wallet_bg.png'); */
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100%;
+  border-radius: 25rpx;
+  height: 140rpx;
+
+  padding-top: 30rpx;
+  padding-left: 30rpx;
+  padding-right: 30rpx;
+  padding-bottom: 10rpx;
+  .left{
+    width: 40%;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+	display: flex;
+    .num{
+      font-size: 32rpx;
+      font-weight: 800;
+      color: @white
+    }
+    .desc{
+      font-size: 28rpx;
+      color: @white
+    }
+  }
+  .mid{
+    width: 35%;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+	display: flex;
+    .num{
+      font-size: 32rpx;
+      font-weight: 800;
+      color: @white
+    }
+    .desc{
+      font-size: 28rpx;
+      color: @white
+    }
+  }
+  .right{
+    width: 25%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+	display: flex;
+    text{
+      background-color: @white;
+     border-top-left-radius:  20rpx;
+      border-top-right-radius: 20rpx;
+      border-bottom-left-radius: 20rpx;
+      border-bottom-right-radius: 20rpx;
+      padding: 10rpx 20rpx;
+      font-size: 28rpx;
+      color: @grey;
+    }
+  }
+
+  .tag{
+    background-color: #FD4E77;
+    position: absolute;
+	top: 0;
+	left: 0;
+	 align-items: center;
+	 justify-content: center;
+	 display: flex;
+	border-top-left-radius: 25rpx;
+	border-top-right-radius: 0rpx;
+	border-bottom-left-radius: 0rpx;
+	border-bottom-right-radius: 25rpx;
+    text{
+      padding: 8rpx 10rpx;
+      font-size: 24rpx;
+	    color: #fff;
+	    display: flex;
+    }
+	    
+   
+  }
+}
+
+</style>

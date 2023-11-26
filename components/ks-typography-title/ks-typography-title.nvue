@@ -1,0 +1,77 @@
+<template>
+        <div class="phy">
+            <div class="title"><div class="tag"></div><text class="text" :style="vstyle">{{title}}</text></div>
+            <div class="more-cont" @click="moreClick"  v-if="more" >
+                <text class="more-cont-txt">{{e18n('index.more')}}</text>
+				<image :src="require('../../assets/images/more_icon.png')"  class="bg-img"  style="left: auto; right:0;top:0rpx; width: 25rpx;height: 25rpx;"></image>
+            </div>
+        </div>
+</template>
+
+<script>
+    export default {
+        props: {
+            title: String,
+			vstyle:String,
+            more:false,
+        },
+		methods:{
+				...getApp().globalData.util,
+			   moreClick() {
+				   this.$emit('more_evt');
+				}
+			}
+    }
+</script>
+
+<style lang="less">
+    @import url("./../../assets/styles/style.less");
+    .phy {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 20rpx;
+		margin-bottom: 20rpx;
+		flex-direction: row;
+		
+        .title{
+            align-items: center;
+			flex-direction: row;
+			display: flex;
+             .tag{
+                    height: 20rpx;
+					width: 8rpx;
+					background-color: @them ;
+					border-radius: 5rpx;
+                    // border-left-color: @them;
+                    // border-left-width: 10rpx;
+                    margin-right: 5rpx;
+                    color: @white3;
+                    font-size: 36rpx;
+                    font-weight: bold;
+                   
+                }
+            .text{
+                color: @white3;
+                font-size: 36rpx;
+                font-weight: 600;
+                }
+        
+        }
+    }
+
+    .more-cont {
+        display: flex;
+        align-items: center;
+		position: relative;
+		flex-direction: row;
+    }
+    .more-cont-txt {
+        font-size: 24rpx;
+        color: @black;
+        padding-right: 40rpx;
+        text-align: center;
+    }
+ 
+ 
+</style>

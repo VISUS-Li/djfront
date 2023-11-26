@@ -1,0 +1,102 @@
+<template>
+ <div class="mess-root">
+	 <!-- #ifdef  MP-WEIXIN || QUICKAPP-WEBVIEW -->
+	 			 <ks-policy-agreement v-if="agree"></ks-policy-agreement>
+	 	   <!-- #endif -->
+			<ks-pop-dailog-window :windata="dial_data"  @close="colseHandle"> </ks-pop-dailog-window>
+			<ks-pop-redbag-window  :windata="redbag_data" @close="colseHandle"> </ks-pop-redbag-window> 
+			<ks-pop-toast :message="toast" @close="nextToast"></ks-pop-toast>
+ </div>
+</template>
+<script>
+	import EventBus from '@/helper/EventBus.js';
+	var eve_open_handle=null;
+	var toast_show_handle=null;
+export default {
+  data(){
+    return {
+		e_datas:[],
+		dial_data:null,
+		redbag_data:null,
+		toast:'',
+		win_stus:false,
+    }
+  },
+  props:{
+	  pagename:'',
+	  agree:false,
+  },
+  computed:{
+  },
+  methods:{
+	   ...getApp().globalData.util,
+	   colseHandle(){
+		   console.log('center closehandle');
+		 this.dial_data=null;
+		 this.redbag_data=null;
+		 this.win_stus=false;
+		 setTimeout(this.loop,500);
+	   },
+	   nextToast(){
+		   this.toast='';
+	   },
+	   toastEveHandle(data){
+		     console.log('toastEveHandle get 1',data)
+		     if(data && (data.pagename==this.pagename)){ //不指定所有的都弹呀。。。
+					 this.toast=data.message;
+			 }
+	   },
+	   eve_open_handle(data){
+		   if(data && (data.pagename==this.pagename || !data.pagename)){ //不指定所有的都弹呀。。。
+			   // console.log('eve_open_handle',data);
+			   let tmp={...{msk_click_able:false,msk:true,suc:null,fail:null},...data};
+			     // console.log('eve_open_handle 2',tmp);
+			  this.e_datas.push(tmp);
+			  if(!this.win_stus) this.loop(); 
+		   }
+	   },
+	   loop(){
+			  if(this.win_stus) return;
+	   		   let temp =this.e_datas.shift();
+	   		   if(temp){
+				   switch(temp.type){
+					   case EventBus.EVE_REDBAG :
+					   // this.dispatchEvent(EventBus.EVE_REDBAG,temp);
+					   this.redbag_data=temp;
+					    this.win_stus=true;
+					   break;
+					   case EventBus.EVE_DIALOG :
+					     // this.dispatchEvent(EventBus.EVE_DIALOG,temp);
+						 this.dial_data=temp;
+					    this.win_stus=true;
+					   break;
+					   default :
+					   this.loop();
+					   break;
+				   }
+	   		   }
+	   }
+  },
+  
+  created() {
+  	   eve_open_handle=this.eve_open_handle;
+	   toast_show_handle =this.toastEveHandle;
+      this.getInitDataCb((res)=>{
+         this.addEventListener(EventBus.EVE_WIND_OPEN,eve_open_handle);
+		 this.addEventListener(EventBus.EVE_TOAST_SHOW,toast_show_handle);
+      })
+  },
+  beforeDestroy() {
+	   this.removeEventListener(EventBus.EVE_WIND_OPEN,eve_open_handle);
+		this.removeEventListener(EventBus.EVE_TOAST_SHOW,toast_show_handle);
+  }
+}
+</script>
+
+<style lang="less" scoped>
+  @import './../../assets/styles/style.less';
+  .mess-root{
+    position: fixed;
+	z-index: 3000;
+  }
+</style>
